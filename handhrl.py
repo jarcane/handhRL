@@ -193,8 +193,8 @@ def make_map():
 			
 			#print "room number" onto room (optional, not included in sample code)
 			#remove later if issues arise, but I think it looks cool and H&H-y
-			room_no = Object(new_x,new_y,chr(65+num_rooms), 'room number', libtcod.white)
-			objects.insert(0,room_no)
+			#room_no = Object(new_x,new_y,chr(65+num_rooms), 'room number', libtcod.white, blocks=False)
+			#objects.insert(0,room_no)
 			
 			if num_rooms == 0:
 				#this is the first room, where the player starts at
