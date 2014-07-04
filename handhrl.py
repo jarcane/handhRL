@@ -1,6 +1,7 @@
 import libtcodpy as libtcod
 import math
 import textwrap
+import shelve
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
@@ -29,6 +30,7 @@ CONFUSE_NUM_TURNS = 10
 CONFUSE_RANGE = 8 
 FIREBALL_DAMAGE = 12 
 FIREBALL_RADIUS = 3 
+MAX_MENU_STARS = 100
 
 color_dark_wall = libtcod.Color(128,128,128)
 color_light_wall = libtcod.Color(130,110,50)
@@ -226,7 +228,135 @@ class ConfusedMonster:
 		else: #restore previous AI
 			self.owner.ai = self.old_ai
 			message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
+
+def generate_starpic():
+	img = libtcod.image_new(160,100)
+	libtcod.image_clear(img, libtcod.black)
+	colors = [libtcod.lightest_yellow, libtcod.lightest_grey, libtcod.white, libtcod.white, libtcod.light_orange, libtcod.darker_red]
+	
+	for x in range(MAX_MENU_STARS):
+		x = libtcod.random_get_int(0,0,159)
+		y = libtcod.random_get_int(0,0,99)
+		c = libtcod.random_get_int(0,0,len(colors)-1)
+		libtcod.image_put_pixel(img, x, y, colors[c])
+	
+	return img
+			
+def main_menu():
+	img = generate_starpic()
+	
+	while not libtcod.console_is_window_closed():
+		#show the background image, at twice the regular resolution
+		libtcod.image_blit_2x(img, 0,0,0)
 		
+		#show the game title and credits!
+		libtcod.console_set_default_foreground(0,libtcod.light_yellow)
+		libtcod.console_print_ex(0,SCREEN_WIDTH/2,SCREEN_HEIGHT/2-4,libtcod.BKGND_NONE,libtcod.CENTER,'HULKS AND HORRORS\nThe Roguelike')
+		libtcod.console_print_ex(0, SCREEN_WIDTH/2,SCREEN_HEIGHT-2,libtcod.BKGND_NONE,libtcod.CENTER,'(c) 2014 by John \'jarcane\' Berry')
+		
+		#show options and wait for the player's choice
+		choice = menu('',['Play a new game','Continue last game','Quit'],24)
+		
+		if choice == 0:
+			new_game()
+			play_game()
+		if choice == 1:
+			try:
+				load_game()
+			except:
+				msgbox('\n No saved game to load.\n',24)
+				continue
+			play_game()
+		elif choice == 2:
+			break
+			
+def new_game():
+	global player, inventory, game_msgs, game_state
+	
+	#create Player object
+	fighter_component = Fighter(hp=30, defense=2, power=5, death_function=player_death)
+	player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
+
+	#generate map
+	make_map()
+	initialize_fov()
+	
+	game_state = 'playing'
+	inventory = []
+	
+	#create the list of game messages and their colors, starts empty
+	game_msgs = []
+	
+	# a warm welcoming message!
+	message('You awaken from teleporter sickness in the bowels of an ancient hulk. You hear hissing in the distance.', libtcod.red)
+
+def initialize_fov():
+	global fov_recompute, fov_map
+	fov_recompute = True
+	libtcod.console_clear(con) #unexplored areas start black
+	
+	#create the FOV map according to the generated map
+	fov_map = libtcod.map_new(MAP_WIDTH, MAP_HEIGHT)
+	for y in range(MAP_HEIGHT):
+		for x in range(MAP_WIDTH):
+			libtcod.map_set_properties(fov_map, x, y, not map[x][y].block_sight, not map[x][y].blocked)
+
+def play_game():
+	global key, mouse
+	
+	player_action = None
+	
+	mouse = libtcod.Mouse()
+	key = libtcod.Key()
+	while not libtcod.console_is_window_closed():
+		#render the screen
+		libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE,key,mouse)
+		render_all()
+		
+		libtcod.console_flush()
+		
+		#erase all objects at old locations before they move
+		for object in objects:
+			object.clear()
+			
+		#handle keys and exit game if needed
+		player_action = handle_keys()
+		if player_action == 'exit':
+			save_game()
+			break
+		
+		#let monsters take their turn
+		if game_state == 'playing' and player_action != 'didnt-take-turn':
+			for object in objects:
+				if object.ai:
+					object.ai.take_turn()
+
+def save_game():
+	#open a new empty shelve (possibly rewriting old one) to write the game data
+	file = shelve.open('savegame','n')
+	file['map']	= map
+	file['objects'] = objects
+	file['player_index'] = objects.index(player)
+	file['inventory'] = inventory
+	file['game_msgs'] = game_msgs
+	file['game_state'] = game_state
+	file.close()
+
+def load_game():
+	#open the previous saved shelve and load the game data
+	global map, objects, player, inventory, game_msgs, game_state
+	
+	file = shelve.open('savegame','r')
+	map = file['map']
+	objects = file['objects']
+	player = objects[file['player_index']] # get index of player in objects list and access it
+	inventory = file['inventory']
+	game_msgs = file['game_msgs']
+	game_state = file['game_state']
+	file.close()
+	
+	initialize_fov()
+	
 def handle_keys():
 	global key
 	
@@ -397,7 +527,10 @@ def place_objects(room):
 			
 
 def make_map():
-	global map
+	global map, objects
+	
+	#the list of objects with just the player
+	objects = [player]
 	
 	#fill map with "unblocked" tiles
 	map = [[ Tile(True)
@@ -470,6 +603,8 @@ def menu(header, options, width):
 	
 	#calculate total height for the header (after auto wrap) and one line per option
 	header_height = libtcod.console_get_height_rect(con, 0,0,width,SCREEN_HEIGHT, header)
+	if header == '':
+		header_height = 0
 	height = len(options) + header_height
 	
 	#create an off-screen console that represents the menu's window
@@ -497,11 +632,17 @@ def menu(header, options, width):
 	libtcod.console_flush()
 	key = libtcod.console_wait_for_keypress(True)
 	
+	if key.vk == libtcod.KEY_ENTER and key.lalt: #special case, have to check for alt+enter for fullscreen
+		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+	
 	#convert the ASCII code to an index; if it corresponds to an option, return it
 	index = key.c - ord('a')
 	if index >= 0 and index < len(options): return index
 	return None
 
+def msgbox(text, width=50):
+	menu(text,[],width) #use menu() as a sort of 'message box'
+	
 def inventory_menu(header):
 	#show a menu of each item in the inventory as an option
 	if len(inventory) == 0:
@@ -722,57 +863,4 @@ libtcod.sys_set_fps(LIMIT_FPS)
 panel = libtcod.console_new(SCREEN_WIDTH,PANEL_HEIGHT)
 con = libtcod.console_new(MAP_WIDTH,MAP_HEIGHT)
 
-#create the list of game messages and their colors, starts empty
-game_msgs = []
-
-#create Player object
-fighter_component = Fighter(hp=30, defense=2, power=5, death_function=player_death)
-player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
-inventory = []
-
-#list of objects
-objects = [player]
-
-#generate map
-make_map()
-fov_map = libtcod.map_new(MAP_WIDTH,MAP_HEIGHT)
-
-game_state = 'playing'
-player_action = None
-for y in range(MAP_HEIGHT):
-	for x in range(MAP_WIDTH):
-		libtcod.map_set_properties(fov_map,x,y,not map[x][y].block_sight, not map[x][y].blocked)
-
-fov_recompute = True
-
-# a warm welcoming message!
-message('You awaken from teleporter sickness in the bowels of an ancient hulk. You hear hissing in the distance.', libtcod.red)
-
-#catch mouse and keys
-mouse = libtcod.Mouse()
-key = libtcod.Key()
-
-while not libtcod.console_is_window_closed():
-	#check for input events
-	libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS|libtcod.EVENT_MOUSE, key, mouse)
-	
-	#draw all objects in the list
-	render_all()
-	
-	libtcod.console_flush()
-		
-	#erase old object locations before they move
-	for object in objects:
-		object.clear()
-	
-	#handle keys and exit game if needed
-	player_action = handle_keys()
-	if player_action == 'exit':
-		break
-	
-	#letmonsters take their turns
-	if game_state == 'playing' and player_action != 'didnt-take-turn':
-		for object in objects:
-			if object.ai:
-				object.ai.take_turn()
-				
+main_menu()
