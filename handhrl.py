@@ -322,6 +322,7 @@ def play_game():
 		#handle keys and exit game if needed
 		player_action = handle_keys()
 		if player_action == 'exit':
+			msgbox('Game saved. Any key to continue.', 33)
 			save_game()
 			break
 		
