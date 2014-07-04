@@ -716,7 +716,7 @@ def cast_fireball():
 #############################################
 # Initialization & Main Loop
 #############################################
-libtcod.console_set_custom_font('terminal8x8_gs_tc.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+libtcod.console_set_custom_font('terminal8x8_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Hulks and Horrors', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 panel = libtcod.console_new(SCREEN_WIDTH,PANEL_HEIGHT)
@@ -727,7 +727,7 @@ game_msgs = []
 
 #create Player object
 fighter_component = Fighter(hp=30, defense=2, power=5, death_function=player_death)
-player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
+player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
 inventory = []
 
 #list of objects
