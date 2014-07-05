@@ -3,6 +3,7 @@ import math
 import textwrap
 import shelve
 import time
+import dice
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
