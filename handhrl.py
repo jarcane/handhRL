@@ -4,6 +4,7 @@ import textwrap
 import shelve
 import time
 import dice
+import os.path
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
@@ -371,12 +372,19 @@ def main_menu():
 		libtcod.console_print_ex(0,SCREEN_WIDTH/2,SCREEN_HEIGHT/2-4,libtcod.BKGND_NONE,libtcod.CENTER,'HULKS AND HORRORS\nThe Roguelike')
 		libtcod.console_print_ex(0, SCREEN_WIDTH/2,SCREEN_HEIGHT-2,libtcod.BKGND_NONE,libtcod.CENTER,'(c) 2014 by John \'jarcane\' Berry')
 		
+		#Change menu options to match state of 'savegame'
+		if os.path.isfile('savegame'):
+			newopt = 'Overwrite current save'
+		else:
+			newopt = 'Play a new game'
+		
 		#show options and wait for the player's choice
-		choice = menu('',['Play a new game','Continue last game','Quit'],24)
+		choice = menu('',[newopt,'Continue last save','Quit'],26)
 		
 		if choice == 0:
 			new_game()
 			play_game()
+			
 		if choice == 1:
 			try:
 				load_game()
@@ -454,7 +462,6 @@ def play_game():
 		#handle keys and exit game if needed
 		player_action = handle_keys()
 		if player_action == 'exit':
-			msgbox('Game saved. Any key to continue.', 33)
 			save_game()
 			break
 		
