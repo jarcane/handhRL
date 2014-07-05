@@ -188,8 +188,8 @@ class Fighter:
 			if function is not None:
 				function(self.owner)
 		
-		if self.owner != player: # yield xp to player
-			player.fighter.xp += self.xp
+			if self.owner != player: # yield xp to player
+				player.fighter.xp += self.xp
 	def heal(self,amount):
 		#heal by the given amount, without going over max_hp
 		self.hp += amount
@@ -431,23 +431,23 @@ def handle_keys():
 	#movement keys
 	if game_state == 'playing':
 		if key.vk == libtcod.KEY_UP or key.vk == libtcod.KEY_KP8:
-            player_move_or_attack(0, -1)
-        elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
-            player_move_or_attack(0, 1)
-        elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
-            player_move_or_attack(-1, 0)
-        elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
-            player_move_or_attack(1, 0)
-        elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
-            player_move_or_attack(-1, -1)
-        elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
-            player_move_or_attack(1, -1)
-        elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
-            player_move_or_attack(-1, 1)
-        elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
-            player_move_or_attack(1, 1)
-        elif key.vk == libtcod.KEY_KP5:
-            pass  #do nothing ie wait for the monster to come to you
+			player_move_or_attack(0, -1)
+		elif key.vk == libtcod.KEY_DOWN or key.vk == libtcod.KEY_KP2:
+			player_move_or_attack(0, 1)
+		elif key.vk == libtcod.KEY_LEFT or key.vk == libtcod.KEY_KP4:
+			player_move_or_attack(-1, 0)
+		elif key.vk == libtcod.KEY_RIGHT or key.vk == libtcod.KEY_KP6:
+			player_move_or_attack(1, 0)
+		elif key.vk == libtcod.KEY_HOME or key.vk == libtcod.KEY_KP7:
+			player_move_or_attack(-1, -1)
+		elif key.vk == libtcod.KEY_PAGEUP or key.vk == libtcod.KEY_KP9:
+			player_move_or_attack(1, -1)
+		elif key.vk == libtcod.KEY_END or key.vk == libtcod.KEY_KP1:
+			player_move_or_attack(-1, 1)
+		elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
+			player_move_or_attack(1, 1)
+		elif key.vk == libtcod.KEY_KP5:
+			pass  #do nothing ie wait for the monster to come to you
 		else:
 			#test for other keys
 			key_char = chr(key.c)
@@ -474,7 +474,7 @@ def handle_keys():
 					next_level()
 			if key_char == 'c':
 				#show character information
-				level_up_xp = LEVEL_UP_BASE + player.level + LEVEL_UP_FACTOR
+				level_up_xp = LEVEL_UP_BASE + (player.level * LEVEL_UP_FACTOR)
 				msgbox('Character Information\n\nLevel: ' + str(player.level) + '\nExperience: ' + str(player.fighter.xp) +
                     '\nExperience to level up: ' + str(level_up_xp) + '\n\nMaximum HP: ' + str(player.fighter.max_hp) +
                     '\nAttack: ' + str(player.fighter.power) + '\nDefense: ' + str(player.fighter.defense), CHARACTER_SCREEN_WIDTH)
@@ -914,16 +914,17 @@ def monster_death(monster):
 
 def check_level_up():
 	#see if the player's experience is enough to level-up
-	level_up_xp = LEVEL_UP_BASE + player.level * LEVEL_UP_FACTOR
+	level_up_xp = LEVEL_UP_BASE + (player.level * LEVEL_UP_FACTOR)
 	if player.fighter.xp >= level_up_xp:
 		#it is! *ding* level up
-		player.level += 10
+		player.level += 1
 		player.fighter.xp -= level_up_xp
 		message('Your battle experience has hardened you further. You reached level '+str(player.level)+'!',libtcod.yellow)
+		render_all()
 		choice = None
 		while choice == None:
 			choice = menu('Level up! Choose a stat to raise:\n',
-				['Constitution (+20 HP from '+str.player.fighter.max_hp+')',
+				['Constitution (+20 HP from '+str(player.fighter.max_hp)+')',
 				'Strength (+1 attack, from '+str(player.fighter.power)+')',
 				'Agility (+1 Defense, from '+str(player.fighter.defense)+')'], LEVEL_SCREEN_WIDTH)
 		
