@@ -2,6 +2,7 @@ import libtcodpy as libtcod
 import math
 import textwrap
 import shelve
+import time
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
@@ -241,14 +242,47 @@ def generate_starpic():
 		libtcod.image_put_pixel(img, x, y, colors[c])
 	
 	return img
-			
+
+def intro_sequence():
+	libtcod.console_set_default_foreground(0,libtcod.green)
+	intro_msg = [
+		'*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
+		'This is Guild Post Alpha Ceti calling GSS Ark-1.',
+		'Ark-1, do you read?',
+		'Captain Rogers, are you there?',
+		'Can anyone read this?',
+		'You must divert course, I repeat ...',
+		'*LOSING SIGNAL*',
+		'... collision course ...',
+		'*MESSAGE CORRUPTED*',
+		'... Gamma Crionis ...',
+		'*26247525* class 4 *10040522* quarantine *21220104* highly unstable',
+		'*23647515*',
+		'We are sending help *21242056* stay alive.']
+	
+	for y in range(len(intro_msg)):
+		key = libtcod.console_check_for_keypress()
+		if key.vk == libtcod.KEY_ESCAPE:
+			return
+		else: 
+			libtcod.console_print_ex(0, SCREEN_WIDTH/8, SCREEN_HEIGHT/5 + y*2,libtcod.BKGND_NONE,libtcod.LEFT,intro_msg[y])
+			libtcod.console_flush()
+			time.sleep(2)
+	
+	
 def main_menu():
+	global firstrun
 	img = generate_starpic()
 	
+	#play intro sequence if starting up
+	if firstrun:
+		intro_sequence()
+		firstrun = False
+		
 	while not libtcod.console_is_window_closed():
 		#show the background image, at twice the regular resolution
 		libtcod.image_blit_2x(img, 0,0,0)
-		
+							
 		#show the game title and credits!
 		libtcod.console_set_default_foreground(0,libtcod.light_yellow)
 		libtcod.console_print_ex(0,SCREEN_WIDTH/2,SCREEN_HEIGHT/2-4,libtcod.BKGND_NONE,libtcod.CENTER,'HULKS AND HORRORS\nThe Roguelike')
@@ -863,5 +897,7 @@ libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Hulks and Horrors', Fals
 libtcod.sys_set_fps(LIMIT_FPS)
 panel = libtcod.console_new(SCREEN_WIDTH,PANEL_HEIGHT)
 con = libtcod.console_new(MAP_WIDTH,MAP_HEIGHT)
+
+firstrun = True
 
 main_menu()
