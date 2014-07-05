@@ -3,7 +3,6 @@ import math
 import textwrap
 import shelve
 import time
-import dice
 import os.path
 
 SCREEN_WIDTH = 80
