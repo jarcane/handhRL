@@ -244,6 +244,18 @@ def generate_starpic():
 	return img
 
 def intro_sequence():
+	#create 'computer screen' backdrop
+	screen_img = libtcod.image_new(160,100)
+	for x in range(124):
+		for y in range(68):
+			libtcod.image_put_pixel(screen_img, x+16, y+16, libtcod.grey)
+	for x in range(120):
+		for y in range(60):
+			libtcod.image_put_pixel(screen_img, x+18, y+18, libtcod.darkest_green)
+	for x in range(3):
+		libtcod.image_put_pixel(screen_img, x+132, 80, libtcod.red)
+	libtcod.image_blit_2x(screen_img, 0,0,0)
+	
 	libtcod.console_set_default_foreground(0,libtcod.green)
 	intro_msg = [
 		'*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
@@ -256,7 +268,8 @@ def intro_sequence():
 		'... collision course ...',
 		'*MESSAGE CORRUPTED*',
 		'... Gamma Crionis ...',
-		'*26247525* class 4 *10040522* quarantine *21220104* highly unstable',
+		'*26247525* class 4 *10040522* quarantine ...',
+		'... *21220104* highly unstable ...',
 		'*23647515*',
 		'We are sending help *21242056* stay alive.']
 	
@@ -267,17 +280,12 @@ def intro_sequence():
 		else: 
 			libtcod.console_print_ex(0, SCREEN_WIDTH/8, SCREEN_HEIGHT/5 + y*2,libtcod.BKGND_NONE,libtcod.LEFT,intro_msg[y])
 			libtcod.console_flush()
-			time.sleep(2)
+			time.sleep(1.5)
 	
+	libtcod.console_wait_for_keypress(True)
 	
 def main_menu():
-	global firstrun
 	img = generate_starpic()
-	
-	#play intro sequence if starting up
-	if firstrun:
-		intro_sequence()
-		firstrun = False
 		
 	while not libtcod.console_is_window_closed():
 		#show the background image, at twice the regular resolution
@@ -305,7 +313,12 @@ def main_menu():
 			break
 			
 def new_game():
-	global player, inventory, game_msgs, game_state
+	global player, inventory, game_msgs, game_state, firstrun
+	
+	#play intro sequence if starting up
+	if firstrun:
+		intro_sequence()
+		firstrun = False
 	
 	#create Player object
 	fighter_component = Fighter(hp=30, defense=2, power=5, death_function=player_death)
@@ -322,7 +335,7 @@ def new_game():
 	game_msgs = []
 	
 	# a warm welcoming message!
-	message('You awaken from teleporter sickness in the bowels of an ancient hulk. You hear hissing in the distance.', libtcod.red)
+	message('You awaken in a damp cave, beneath a dim shaft of light cast through the hole you\'ve left in the surface of Gamma Orionis.', libtcod.red)
 
 def initialize_fov():
 	global fov_recompute, fov_map
