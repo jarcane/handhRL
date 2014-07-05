@@ -1,7 +1,9 @@
 handhRL
 =======
 
-A simple roguelike based on the Hulks and Horrors tabletop RPG written with Python 2.7 and libtcod
+A simple roguelike based on the Hulks and Horrors tabletop RPG written with Python 2.7 and libtcod.
+
+As of now the engine is complete, but additional work will be needed to build it up to a more accurate representation of the source. The eventual goal is to be as accurate a representation of the H&H rules as can be managed, allowing for adjustment to the form.
 
 Code is based on the excellent tutorial here: http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod
 
