@@ -15,21 +15,19 @@ MAX_ROOMS = 30
 FOV_ALGO = 0
 FOV_LIGHT_WALLS = True
 TORCH_RADIUS = 10
-MAX_ROOM_MONSTERS = 3
 BAR_WIDTH = 20
 PANEL_HEIGHT = 7
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
 MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2 
 MSG_HEIGHT = PANEL_HEIGHT - 1 
-MAX_ROOM_ITEMS = 2 
 INVENTORY_WIDTH = 50
-HEAL_AMOUNT = 4 
-LIGHTNING_DAMAGE = 20
+HEAL_AMOUNT = 40 
+LIGHTNING_DAMAGE = 40
 LIGHTNING_RANGE = 5 
 CONFUSE_NUM_TURNS = 10
 CONFUSE_RANGE = 8 
-FIREBALL_DAMAGE = 12 
+FIREBALL_DAMAGE = 25 
 FIREBALL_RADIUS = 3 
 LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
@@ -328,7 +326,7 @@ def new_game():
 		firstrun = False
 	
 	#create Player object
-	fighter_component = Fighter(hp=30, defense=2, power=5, xp=0, death_function=player_death)
+	fighter_component = Fighter(hp=100, defense=1, power=4, xp=0, death_function=player_death)
 	player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
 	player.level = 1
 	
@@ -550,11 +548,55 @@ def create_room(room):
 		for y in range(room.y1 + 1, room.y2):
 			map[x][y].blocked = False
 			map[x][y].block_sight = False
+
+def random_choice(chances_dict):
+	#choose one option from dictionary of chances, returning its key
+	chances = chances_dict.values()
+	strings = chances_dict.keys()
+	
+	return strings[random_choice_index(chances)]
 			
+def random_choice_index(chances): #choose one option from a list of chances and return its index
+	dice = libtcod.random_get_int(0,1,sum(chances))
+	#go through all chances, keep sum so far
+	running_sum = 0
+	choice = 0 
+	for w in chances:
+		running_sum += w 
+		
+		#see if the dice landed in the part that corresponds to this choice
+		if dice <= running_sum:
+			return choice
+		choice += 1
+
+def from_dungeon_level(table):
+	#returns a value that depends on level. the table specifies what value occurs after each level, default is 0
+	for (value, level) in reversed(table):
+		if dungeon_level >= level:
+			return value
+	return 0 
+	
 def place_objects(room):
+	#maximum number of monsters per room
+	max_monsters = from_dungeon_level([[2,1],[3,4],[5,6]])
+	
+	#chances of each monster
+	monster_chances = {}
+	monster_chances['felix'] = 80
+	monster_chances['lobsterman'] = from_dungeon_level([[15,3],[30,5],[60,7]])
+	
+	#max number of items per room
+	max_items = from_dungeon_level([[1,1],[2,4]])
+	
+	#chance of each item (0 by default at level 1, goes up)
+	item_chances = {}
+	item_chances['opacaine'] = 35
+	item_chances['tesla'] = from_dungeon_level([[25,4]])
+	item_chances['grenade'] = from_dungeon_level([[25,6]])
+	item_chances['confuse'] = from_dungeon_level([[10,2]])
 	
 	#choose random number of monsters
-	num_monsters = libtcod.random_get_int(0,0, MAX_ROOM_MONSTERS)
+	num_monsters = libtcod.random_get_int(0,0, max_monsters)
 	
 	for i in range(num_monsters):
 		#choose random spot for this monster
@@ -564,20 +606,21 @@ def place_objects(room):
 		#only place it if the tile is not blocked
         
 		if not is_blocked(x, y):
-			if libtcod.random_get_int(0,0,100) < 80:
+			choice = random_choice(monster_chances)
+			if choice == 'felix':
 				#create a felix
-				fighter_component = Fighter(hp=10, defense=0, power=3,xp=35, death_function = monster_death)
+				fighter_component = Fighter(hp=20, defense=0, power=4,xp=35, death_function = monster_death)
 				ai_component = BasicMonster()				
 				monster = Object(x,y,'f', 'felix', libtcod.fuchsia, blocks=True, fighter=fighter_component, ai=ai_component)
-			else:
+			elif choice == 'lobsterman':
 				#create a lobsterman
-				fighter_component = Fighter(hp=16, defense=1, power=4, xp=100, death_function = monster_death)
+				fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function = monster_death)
 				ai_component = BasicMonster()
 				monster = Object(x,y,'L', 'lobsterman', libtcod.red, blocks=True, fighter=fighter_component, ai=ai_component)
 			objects.append(monster)
 	
 	#choose a random number of items
-	num_items = libtcod.random_get_int(0,0,MAX_ROOM_ITEMS)
+	num_items = libtcod.random_get_int(0,0,max_items)
 	
 	for i in range(num_items):
 		#choose a random spot for the item
@@ -586,20 +629,20 @@ def place_objects(room):
 		
 		#only place it if the tile is not blocked
 		if not is_blocked(x,y):
-			dice = libtcod.random_get_int(0, 0, 100)
-			if dice < 70:
+			choice = random_choice(item_chances)
+			if choice == 'opacaine':
 				#create a healing item
 				item_component = Item(use_function=cast_heal)
 				item = Object(x, y, '!', 'dose of Opacaine', libtcod.violet, item=item_component)
-			elif dice < 70+10:
+			elif choice == 'tesla':
 				#create an arc lightning device 
 				item_component = Item(use_function=cast_lightning)
 				item = Object(x,y,'#','Tesla arc device', libtcod.light_yellow, item=item_component)
-			elif dice < 70+10+10:
+			elif choice == 'grenade':
 				#create a grenade
 				item_component = Item(use_function=cast_fireball)
 				item = Object(x,y,'#','inciendiary grenade', libtcod.light_yellow, item=item_component)
-			else:
+			elif choice == 'confuse':
 				#create a confuse item 
 				item_component = Item(use_function=cast_confuse)
 				item = Object(x,y,'#', 'neural scrambler', libtcod.light_yellow, item=item_component)
@@ -920,7 +963,7 @@ def check_level_up():
 		player.level += 1
 		player.fighter.xp -= level_up_xp
 		message('Your battle experience has hardened you further. You reached level '+str(player.level)+'!',libtcod.yellow)
-		render_all()
+		render_all() #re-render console so that message plays before menu
 		choice = None
 		while choice == None:
 			choice = menu('Level up! Choose a stat to raise:\n',
