@@ -766,7 +766,7 @@ def place_objects(room):
 
     # chances of each monster
     monster_chances = {'felix': 80,
-                       'lobsterman': from_dungeon_level([[15, 3], [30, 5], [60, 7]])}
+                       'nagahide': from_dungeon_level([[15, 3], [30, 5], [60, 7]])}
 
     # max number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
@@ -795,13 +795,13 @@ def place_objects(room):
                 # create a felix
                 fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=monster_death)
                 ai_component = BasicMonster()
-                monster = Object(x, y, 'f', 'felix', libtcod.fuchsia, blocks=True, fighter=fighter_component,
+                monster = Object(x, y, 'f', 'felix', libtcod.light_azure, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
-            elif choice == 'lobsterman':
-                # create a lobsterman
+            elif choice == 'nagahide':
+                # create a clawman
                 fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=monster_death)
                 ai_component = BasicMonster()
-                monster = Object(x, y, 'L', 'lobsterman', libtcod.red, blocks=True, fighter=fighter_component,
+                monster = Object(x, y, 'N', 'nagahide', libtcod.dark_green, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
             objects.append(monster)
 
