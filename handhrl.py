@@ -50,7 +50,8 @@ class Tile:
         self.explored = False
 
         # by default, if a tile is blocked, it also blocks sight
-        if block_sight is None:    block_sight = blocked
+        if block_sight is None:
+            block_sight = blocked
         self.block_sight = block_sight
 
 
@@ -222,7 +223,8 @@ class Equipment:
 
     def dequip(self):
         # dequip object and show a message about it.
-        if not self.is_equipped: return
+        if not self.is_equipped:
+            return
         self.is_equipped = False
         message('Dequipped ' + self.owner.name + ' from ' + self.slot + '.', libtcod.light_yellow)
 
@@ -351,8 +353,8 @@ def generate_screen():
 
 
 def show_text_log(text, img=None):
-    if img == None:
-        img = libtcod.image_new(160,100)
+    if img is None:
+        img = libtcod.image_new(160, 100)
     libtcod.image_blit_2x(img, 0, 0, 0)
 
     libtcod.console_set_default_foreground(0, libtcod.green)
@@ -369,8 +371,8 @@ def show_text_log(text, img=None):
 
     libtcod.console_wait_for_keypress(True)
 
-def intro_sequence():
 
+def intro_sequence():
     intro_msg = [
         '*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
         'This is Guild Post Alpha Ceti calling GSS Ark-1.',
@@ -544,7 +546,7 @@ def load_game():
 
 
 def end_game():
-    message = [
+    ending = [
         '*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
         'Calling Guild Post Alpha Ceti.',
         'Come in Guild Post Alpha Ceti.',
@@ -557,7 +559,7 @@ def end_game():
         '*silence*'
     ]
 
-    show_text_log(message, generate_starpic())
+    show_text_log(ending, generate_starpic())
     os.remove('savegame')
     main_menu()
 
@@ -760,24 +762,22 @@ def from_player_level(table):
 
 def place_objects(room):
     # maximum number of monsters per room
-    max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
+    max_monsters = from_dungeon_level([[2, 1], [3, 4], [4, 6], [5, 8]])
 
     # chances of each monster
-    monster_chances = {}
-    monster_chances['felix'] = 80
-    monster_chances['lobsterman'] = from_dungeon_level([[15, 3], [30, 5], [60, 7]])
+    monster_chances = {'felix': 80,
+                       'lobsterman': from_dungeon_level([[15, 3], [30, 5], [60, 7]])}
 
     # max number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
 
     # chance of each item (0 by default at level 1, goes up)
-    item_chances = {}
-    item_chances['opacaine'] = 25
-    item_chances['tesla'] = from_dungeon_level([[25, 4]])
-    item_chances['grenade'] = from_dungeon_level([[20, 6]])
-    item_chances['confuse'] = from_dungeon_level([[10, 2]])
-    item_chances['laser_sword'] = from_dungeon_level([[10, 4]])
-    item_chances['plexsteel_shield'] = from_dungeon_level([[10, 8]])
+    item_chances = {'opacaine': 25,
+                    'tesla': from_dungeon_level([[25, 4]]),
+                    'grenade': from_dungeon_level([[20, 6]]),
+                    'confuse': from_dungeon_level([[10, 2]]),
+                    'laser_sword': from_dungeon_level([[10, 4]]),
+                    'plexsteel_shield': from_dungeon_level([[10, 8]])}
 
     # choose random number of monsters
     num_monsters = libtcod.random_get_int(0, 0, max_monsters)
@@ -925,7 +925,9 @@ def make_map():
 def next_level():
     global dungeon_level
 
-    if dungeon_level >=7:
+    if dungeon_level >= 13:
+        message('At last, you find an escape to the surface. You crawl up the narrow passage in search of rescue.',
+                libtcod.yellow)
         end_game()
 
     # advance to the next level
@@ -939,9 +941,9 @@ def next_level():
     initialize_fov()
 
 
-
 def menu(header, options, width):
-    if len(options) > 26: raise ValueError('Cannot have a menu with more than 26 options.')
+    if len(options) > 26:
+        raise ValueError('Cannot have a menu with more than 26 options.')
 
     # calculate total height for the header (after auto wrap) and one line per option
     header_height = libtcod.console_get_height_rect(con, 0, 0, width, SCREEN_HEIGHT, header)
@@ -979,7 +981,8 @@ def menu(header, options, width):
 
     # convert the ASCII code to an index; if it corresponds to an option, return it
     index = key.c - ord('a')
-    if 0 <= index < len(options): return index
+    if 0 <= index < len(options):
+        return index
     return None
 
 
@@ -1003,7 +1006,8 @@ def inventory_menu(header):
     index = menu(header, options, INVENTORY_WIDTH)
 
     # if an item was chosen, return it
-    if index is None or len(inventory) == 0: return None
+    if index is None or len(inventory) == 0:
+        return None
     return inventory[index].item
 
 
@@ -1245,7 +1249,8 @@ def cast_confuse():
     # ask for target and confuse it
     message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
     monster = target_monster(CONFUSE_RANGE)
-    if monster is None: return 'cancelled'
+    if monster is None:
+        return 'cancelled'
     old_ai = monster.ai
     monster.ai = ConfusedMonster(old_ai)
     monster.ai.owner = monster  # tell the new component who owns it
@@ -1256,7 +1261,8 @@ def cast_fireball():
     # ask the player for a target tile to throw a 'fireball' at (ie. grenade, AOE, etc)
     message('Left-click a target tile, or right-click to cancel.', libtcod.light_cyan)
     (x, y) = target_tile()
-    if x is None: return 'cancelled'
+    if x is None:
+        return 'cancelled'
     message('The device explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
 
     for obj in objects:  # damage every fighter in range, including the player
