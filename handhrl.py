@@ -3,7 +3,7 @@ import math
 import textwrap
 import shelve
 import time
-import os.path
+import os
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
@@ -285,10 +285,6 @@ class Fighter:
             message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!',
                     libtcod.normal_grey)
 
-    @max_hp.setter
-    def max_hp(self, value):
-        self._max_hp = value
-
 
 class BasicMonster:
     # AI for a basic monster
@@ -340,7 +336,7 @@ def generate_starpic():
     return img
 
 
-def intro_sequence():
+def generate_screen():
     # create 'computer screen' backdrop
     screen_img = libtcod.image_new(160, 100)
     for x in range(124):
@@ -351,9 +347,30 @@ def intro_sequence():
             libtcod.image_put_pixel(screen_img, x + 18, y + 18, libtcod.darkest_green)
     for x in range(3):
         libtcod.image_put_pixel(screen_img, x + 132, 80, libtcod.red)
-    libtcod.image_blit_2x(screen_img, 0, 0, 0)
+    return screen_img
+
+
+def show_text_log(text, img=None):
+    if img == None:
+        img = libtcod.image_new(160,100)
+    libtcod.image_blit_2x(img, 0, 0, 0)
 
     libtcod.console_set_default_foreground(0, libtcod.green)
+
+    for y in range(len(text)):
+        key = libtcod.console_check_for_keypress()
+        if key.vk == libtcod.KEY_ESCAPE:
+            return
+        else:
+            libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE, libtcod.LEFT,
+                                     text[y])
+            libtcod.console_flush()
+            time.sleep(1.5)
+
+    libtcod.console_wait_for_keypress(True)
+
+def intro_sequence():
+
     intro_msg = [
         '*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
         'This is Guild Post Alpha Ceti calling GSS Ark-1.',
@@ -370,17 +387,7 @@ def intro_sequence():
         '*23647515*',
         'We are sending help *21242056* stay alive.']
 
-    for y in range(len(intro_msg)):
-        key = libtcod.console_check_for_keypress()
-        if key.vk == libtcod.KEY_ESCAPE:
-            return
-        else:
-            libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE, libtcod.LEFT,
-                                     intro_msg[y])
-            libtcod.console_flush()
-            time.sleep(1.5)
-
-    libtcod.console_wait_for_keypress(True)
+    show_text_log(intro_msg, generate_screen())
 
 
 def main_menu():
@@ -488,7 +495,12 @@ def play_game():
 
         # handle keys and exit game if needed
         player_action = handle_keys(key, mouse)
-        if player_action == 'exit':
+        if player_action == 'exit' and game_state == 'dead':
+            try:
+                os.remove('savegame')
+            except:
+                break
+        elif player_action == 'exit':
             save_game()
             break
 
@@ -529,6 +541,25 @@ def load_game():
     file.close()
 
     initialize_fov()
+
+
+def end_game():
+    message = [
+        '*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
+        'Calling Guild Post Alpha Ceti.',
+        'Come in Guild Post Alpha Ceti.',
+        'This is the last survivor of the Ark-1.',
+        'Requesting immediate evacuation.',
+        'Please respond.',
+        'Can anyone hear me?',
+        '... Is there anybody out there?',
+        '...',
+        '*silence*'
+    ]
+
+    show_text_log(message, generate_starpic())
+    os.remove('savegame')
+    main_menu()
 
 
 def handle_keys(key, mouse):
@@ -894,14 +925,19 @@ def make_map():
 def next_level():
     global dungeon_level
 
+    if dungeon_level >=7:
+        end_game()
+
     # advance to the next level
     message('You take a moment to rest, and recover your strength.', libtcod.yellow)
     player.fighter.heal(player.fighter.max_hp / 2)  # heal player by 50%
 
     message('After a rare moment of peace, you descend further into the cave.', libtcod.red)
     dungeon_level += 1
+
     make_map()
     initialize_fov()
+
 
 
 def menu(header, options, width):
