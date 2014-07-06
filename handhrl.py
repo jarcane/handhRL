@@ -232,7 +232,7 @@ class Equipment:
 class Fighter:
     # combat-related properties and methods (monster, player, npc)
     def __init__(self, hp, defense, power, xp, death_function=None):
-        self.max_hp = hp
+        self.base_max_hp = hp
         self.hp = hp
         self.base_defense = defense
         self.base_power = power
