@@ -470,8 +470,6 @@ def initialize_fov():
 
 
 def play_game():
-    global key, mouse
-
     player_action = None
 
     mouse = libtcod.Mouse()
@@ -489,7 +487,7 @@ def play_game():
             object.clear()
 
         # handle keys and exit game if needed
-        player_action = handle_keys()
+        player_action = handle_keys(key, mouse)
         if player_action == 'exit':
             save_game()
             break
@@ -533,9 +531,7 @@ def load_game():
     initialize_fov()
 
 
-def handle_keys():
-    global key
-
+def handle_keys(key, mouse):
     if key.vk == libtcod.KEY_ENTER and key.lalt:
         # Alt+Enter: toggle fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
@@ -600,7 +596,8 @@ def handle_keys():
 def target_tile(max_range=None):
     # return the position of a tile left-clicked in player FOV (optionally in a range)
     # or return (None,None) if right clicked
-    global key, mouse
+    key = libtcod.Key()
+    mouse = libtcod.Mouse()
     while True:
         # render the screen. this reases the inventory and shows the names of objects under the mouse
         libtcod.console_flush()
@@ -630,8 +627,9 @@ def target_monster(max_range=None):
 
 
 def get_names_under_mouse():
-    global mouse
-
+    key = libtcod.Key()
+    mouse = libtcod.Mouse()
+    libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
     # return a string with the names of all objects under the mouse
     (x, y) = (mouse.cx, mouse.cy)
 
