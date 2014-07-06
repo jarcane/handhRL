@@ -694,6 +694,23 @@ def random_choice_index(chances):  # choose one option from a list of chances an
         choice += 1
 
 
+def rolldice(num, sides, highest=0):
+    roll = []
+    total = 0
+    if highest != 0:
+        for x in range(num):
+            roll.append(libtcod.random_get_int(0, 1, sides))
+        roll.sort(reverse=True)
+        for x in range(highest):
+            total += roll[x]
+        return total
+    else:
+        for x in range(num):
+            roll.append(libtcod.random_get_int(0, 1, sides))
+        total = sum(roll)
+        return total
+
+
 def from_dungeon_level(table):
     # returns a value that depends on level. the table specifies what value occurs after each level, default is 0
     for (value, level) in reversed(table):
