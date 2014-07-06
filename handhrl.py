@@ -23,12 +23,12 @@ MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
 INVENTORY_WIDTH = 50
-HEAL_AMOUNT = 40
-LIGHTNING_DAMAGE = 40
+HEAL_AMOUNT = 4
+LIGHTNING_DAMAGE = 12
 LIGHTNING_RANGE = 5
 CONFUSE_NUM_TURNS = 10
 CONFUSE_RANGE = 8
-FIREBALL_DAMAGE = 25
+FIREBALL_DAMAGE = 6
 FIREBALL_RADIUS = 3
 LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
@@ -198,9 +198,10 @@ class Item:
 
 class Equipment:
     # an object that can be equipped, yielding bonuses. automatically adds the item component.
-    def __init__(self, slot, power_bonus=0, defense_bonus=0, max_hp_bonus=0):
-        self.power_bonus = power_bonus
-        self.defense_bonus = defense_bonus
+    def __init__(self, slot, to_hit_bonus=0, damage_bonus=0, armor_bonus=0, max_hp_bonus=0):
+        self.to_hit_bonus = to_hit_bonus
+        self.damage_bonus = damage_bonus
+        self.armor_bonus = armor_bonus
         self.max_hp_bonus = max_hp_bonus
         self.slot = slot
         self.is_equipped = False
@@ -231,23 +232,29 @@ class Equipment:
 
 class Fighter:
     # combat-related properties and methods (monster, player, npc)
-    def __init__(self, hp, defense, power, xp, death_function=None):
+    def __init__(self, hp, armor_class, to_hit, damage, xp, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
-        self.base_defense = defense
-        self.base_power = power
+        self.base_armor_class = armor_class
+        self.base_to_hit = to_hit
+        self.base_damage = damage
         self.xp = xp
         self.death_function = death_function
 
     @property
-    def power(self):
-        bonus = sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
-        return self.base_power + bonus
+    def to_hit(self):
+        bonus = sum(equipment.to_hit_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_to_hit + bonus
 
     @property
-    def defense(self):  # return actual defense, by summing up the bonuses from all equipped items
-        bonus = sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
-        return self.base_defense + bonus
+    def armor_class(self):  # return actual defense, by summing up the bonuses from all equipped items
+        bonus = sum(equipment.armor_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_armor_class + bonus
+
+    @property
+    def damage(self): # return actual damage bonus, plus any special bonuses
+        bonus = sum(equipment.damage_bonus for equipment in get_all_equipped(self.owner))
+        return self.base_damage + bonus
 
     @property
     def max_hp(self):  # return actual max_hp, by summing up the bonuses from all equipped items
@@ -275,16 +282,22 @@ class Fighter:
             self.hp = self.max_hp
 
     def attack(self, target):
-        # a simple formula for attack damage
-        damage = self.power - target.fighter.defense
+        # first check for successful attack
+        to_hit_target = self.to_hit + target.fighter.armor_class + 5
+        if rolldice(1, 20) >= to_hit_target:
+            message(self.owner.name.capitalize() + ' misses the ' + target.name + '.')
+            return
+
+        # now roll for damage (curr. using OD&D style)
+        damage = rolldice(1,6) + self.damage
 
         if damage > 0:
             # make the target take some damage
-            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.',
+            message(self.owner.name.capitalize() + ' hits the ' + target.name + ' for ' + str(damage) + ' hit points.',
                     libtcod.yellow)
             target.fighter.take_damage(damage)
         else:
-            message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!',
+            message(self.owner.name.capitalize() + ' hits the ' + target.name + ' but it has no effect!',
                     libtcod.normal_grey)
 
 
@@ -448,7 +461,8 @@ def new_game():
         firstrun = False
 
     # create Player object
-    fighter_component = Fighter(hp=100, defense=1, power=4, xp=0, death_function=player_death)
+    # Assume Soldier class with 10 STR, 10 DEX, 10 CON
+    fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=0, xp=0, death_function=player_death)
     player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
     player.level = 1
 
@@ -468,7 +482,7 @@ def new_game():
             libtcod.red)
 
     # initial equipment: a knife
-    equipment_component = Equipment(slot='right hand', power_bonus=2)
+    equipment_component = Equipment(slot='right hand', damage_bonus=1)
     obj = Object(0, 0, '-', 'combat knife', libtcod.sky, equipment=equipment_component)
     inventory.append(obj)
     equipment_component.equip()
@@ -633,8 +647,9 @@ def handle_keys(key, mouse):
                     'Experience: ' + str(player.fighter.xp),
                     'Experience to level up: ' + str(level_up_xp),
                     'Maximum HP: ' + str(player.fighter.max_hp),
-                    'Attack: ' + str(player.fighter.base_power) + ' (' + str(player.fighter.power) + ')',
-                    'Defense: ' + str(player.fighter.base_defense) + ' (' + str(player.fighter.defense) + ')',
+                    'To-hit: +' + str(player.fighter.to_hit),
+                    'Damage Bonus: +' + str(player.fighter.damage),
+                    'AC: ' + str(player.fighter.armor_class),
                     ], generate_screen(), delay=False)
             return 'didnt-take-turn'
 
@@ -790,9 +805,10 @@ def place_objects(room):
     max_items = from_dungeon_level([[1, 1], [2, 4]])
 
     # chance of each item (0 by default at level 1, goes up)
-    item_chances = {'opacaine': 25,
-                    'tesla': from_dungeon_level([[25, 4]]),
-                    'grenade': from_dungeon_level([[20, 6]]),
+    item_chances = {'opacaine': 15,
+                    'vacc_suit': from_dungeon_level([[10, 2]]),
+                    'tesla': from_dungeon_level([[15, 4]]),
+                    'grenade': from_dungeon_level([[10, 6]]),
                     'confuse': from_dungeon_level([[10, 2]]),
                     'laser_sword': from_dungeon_level([[10, 4]]),
                     'plexsteel_shield': from_dungeon_level([[10, 8]])}
@@ -811,13 +827,15 @@ def place_objects(room):
             choice = random_choice(monster_chances)
             if choice == 'felix':
                 # create a felix
-                fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=monster_death)
+                fighter_component = Fighter(hp=rolldice(1, 4), armor_class=8, to_hit=0, damage=0, xp=35,
+                                            death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'f', 'felix', libtcod.light_azure, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
             elif choice == 'nagahide':
                 # create a clawman
-                fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=monster_death)
+                fighter_component = Fighter(hp=rolldice(2, 12), armor_class=7, to_hit=2, damage=3, xp=100,
+                                            death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'N', 'nagahide', libtcod.dark_green, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
@@ -852,12 +870,16 @@ def place_objects(room):
                 item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
             elif choice == 'laser_sword':
                 # create a sword
-                equipment_component = Equipment(slot='right hand', power_bonus=3)
+                equipment_component = Equipment(slot='right hand', damage_bonus=2)
                 item = Object(x, y, '/', 'laser sword', libtcod.sky, equipment=equipment_component)
             elif choice == 'plexsteel_shield':
                 # create a shield
-                equipment_component = Equipment(slot='left hand', defense_bonus=1)
+                equipment_component = Equipment(slot='left hand', armor_bonus=-1)
                 item = Object(x, y, '[', 'plexsteel shield', libtcod.darker_orange, equipment=equipment_component)
+            elif choice == 'vacc_suit':
+                # create vacc suit armor
+                equipment_component = Equipment(slot='armor', armor_bonus=-2)
+                item = Object(x, y, ']', 'vacc suit', libtcod.silver, equipment=equipment_component)
             objects.append(item)
             item.send_to_back()  # items appear below other objects
 
@@ -1224,20 +1246,14 @@ def check_level_up():
         message('Your battle experience has hardened you further. You reached level ' + str(player.level) + '!',
                 libtcod.yellow)
         render_all()  # re-render console so that message plays before menu
-        choice = None
-        while choice is None:
-            choice = menu('Level up! Choose a stat to raise:\n',
-                          ['Constitution (+20 HP from ' + str(player.fighter.max_hp) + ')',
-                           'Strength (+1 attack, from ' + str(player.fighter.base_power) + ')',
-                           'Agility (+1 Defense, from ' + str(player.fighter.base_defense) + ')'], LEVEL_SCREEN_WIDTH)
 
-        if choice == 0:
-            player.fighter.max_hp += 20
-            player.fighter.hp += 20
-        elif choice == 1:
-            player.fighter.base_power += 1
-        elif choice == 2:
-            player.fighter.base_defense += 1
+        hit_die = rolldice(1, 10)
+        player.fighter.max_hp += hit_die
+        player.fighter.hp += hit_die
+
+        player.fighter.base_to_hit += 1
+
+        player.fighter.base_damage += 1
 
 
 def cast_heal():
