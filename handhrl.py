@@ -324,6 +324,7 @@ class ConfusedMonster:
 
 
 def generate_starpic():
+    # Generates a random starfield pattern and stores it in img
     img = libtcod.image_new(160, 100)
     libtcod.image_clear(img, libtcod.black)
     colors = [libtcod.lightest_yellow, libtcod.lightest_grey, libtcod.white, libtcod.white, libtcod.light_orange,
@@ -339,7 +340,7 @@ def generate_starpic():
 
 
 def generate_screen():
-    # create 'computer screen' backdrop
+    # create 'computer screen' backdrop and store in screen_img
     screen_img = libtcod.image_new(160, 100)
     for x in range(124):
         for y in range(68):
@@ -353,6 +354,9 @@ def generate_screen():
 
 
 def show_text_log(text, img=None, delay=True):
+    # takes list of text and displays it line by line against a black screen
+    # optional parameters: img = an image based in libtcod.image format, defaults to None (black screen)
+    # delay = whether to use the text delay, defaults to True (for cinematic style sequences)
     if img is None:
         img = libtcod.image_new(160, 100)
     libtcod.image_blit_2x(img, 0, 0, 0)
@@ -374,6 +378,8 @@ def show_text_log(text, img=None, delay=True):
 
 
 def intro_sequence():
+    # Shows a text intro 'cinematic' sequence for starting up a new game.
+
     intro_msg = [
         '*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
         'This is Guild Post Alpha Ceti calling GSS Ark-1.',
@@ -394,6 +400,8 @@ def intro_sequence():
 
 
 def main_menu():
+    # The main game menu.
+
     img = generate_starpic()
 
     while not libtcod.console_is_window_closed():
@@ -733,6 +741,11 @@ def random_choice_index(chances):  # choose one option from a list of chances an
 
 
 def rolldice(num, sides, highest=0):
+    # rolls a given number of dice and returns their total
+    # args: num = number of dice, sides = number of sides on each die,
+    # highest (optional) = if != 0, returns only the sum of the highest number of dice given
+    # Ex. (using H&H notation): 4d6 = rolldice(4,6); 3d6H2 = rolldice(3,6,highest=2)
+
     roll = []
     total = 0
     if highest != 0:
