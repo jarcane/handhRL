@@ -352,7 +352,7 @@ def generate_screen():
     return screen_img
 
 
-def show_text_log(text, img=None):
+def show_text_log(text, img=None, delay=True):
     if img is None:
         img = libtcod.image_new(160, 100)
     libtcod.image_blit_2x(img, 0, 0, 0)
@@ -367,7 +367,8 @@ def show_text_log(text, img=None):
             libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE, libtcod.LEFT,
                                      text[y])
             libtcod.console_flush()
-            time.sleep(1.5)
+            if delay == True:
+                time.sleep(1.5)
 
     libtcod.console_wait_for_keypress(True)
 
@@ -618,11 +619,15 @@ def handle_keys(key, mouse):
             if key_char == 'c':
                 # show character information
                 level_up_xp = LEVEL_UP_BASE + (player.level * LEVEL_UP_FACTOR)
-                msgbox(
-                    'Character Information\n\nLevel: ' + str(player.level) + '\nExperience: ' + str(player.fighter.xp) +
-                    '\nExperience to level up: ' + str(level_up_xp) + '\n\nMaximum HP: ' + str(player.fighter.max_hp) +
-                    '\nAttack: ' + str(player.fighter.power) + '\nDefense: ' + str(player.fighter.defense),
-                    CHARACTER_SCREEN_WIDTH)
+                show_text_log([
+                    'Character Information',
+                    'Level: ' + str(player.level),
+                    'Experience: ' + str(player.fighter.xp),
+                    'Experience to level up: ' + str(level_up_xp),
+                    'Maximum HP: ' + str(player.fighter.max_hp),
+                    'Attack: ' + str(player.fighter.base_power) + ' (' + str(player.fighter.power) + ')',
+                    'Defense: ' + str(player.fighter.base_defense) + ' (' + str(player.fighter.defense) + ')',
+                    ], generate_screen(), delay=False)
             return 'didnt-take-turn'
 
 
