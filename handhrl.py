@@ -757,7 +757,22 @@ def get_names_under_mouse():
     # create a list with the names of all objects at the mouse's coordinates within FOV
     names = [obj.name for obj in objects
              if obj.x == x and obj.y == y and libtcod.map_is_in_fov(fov_map, obj.x, obj.y)]
-    names = ', '.join(names)  # join the names, seperated by commas
+    if names:
+        names = ', '.join(names)  # join the names, seperated by commas
+        names = 'Under mouse: ' + names
+    else:
+        names = ''
+    return names.capitalize()
+
+
+def get_names_under_player():
+    names = [obj.name for obj in objects
+             if obj.x == player.x and obj.y == player.y and obj.name != 'player']
+    if names:
+        names = ', '.join(names)  # join the names, seperated by commas
+        names = 'Under player: ' + names
+    else:
+        names = ''
     return names.capitalize()
 
 
@@ -1216,18 +1231,14 @@ def render_all():
     render_bar(1, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
     render_bar(1, 2, BAR_WIDTH, 'XP', player.fighter.xp, level_up_xp, libtcod.green, libtcod.grey)
     libtcod.console_print_ex(panel, 1, 4, libtcod.BKGND_NONE, libtcod.LEFT, 'Exp. level ' + str(player.level))
-    libtcod.console_print_ex(panel, 1, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'Cave level ' + str(dungeon_level))
+    libtcod.console_print_ex(panel, 1, 5, libtcod.BKGND_NONE, libtcod.LEFT, 'Cave level ' + str(dungeon_level))
 
     # display names of objects under mouse
     libtcod.console_set_default_foreground(panel, libtcod.light_gray)
     libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
 
     # display names of objects under player on right side of panel
-    names = [obj.name for obj in objects
-             if obj.x == player.x and obj.y == player.y and obj.name != 'player']
-    names = ', '.join(names)  # join the names, seperated by commas
-    names.capitalize()
-    libtcod.console_print_ex(panel, 78, 0, libtcod.BKGND_NONE, libtcod.RIGHT, names)
+    libtcod.console_print_ex(panel, SCREEN_WIDTH-2, 0, libtcod.BKGND_NONE, libtcod.RIGHT, get_names_under_player())
 
     # blit the contents of "panel" to root console
     libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
