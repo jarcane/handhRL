@@ -23,12 +23,12 @@ MSG_X = BAR_WIDTH + 2
 MSG_WIDTH = SCREEN_WIDTH - BAR_WIDTH - 2
 MSG_HEIGHT = PANEL_HEIGHT - 1
 INVENTORY_WIDTH = 50
-HEAL_AMOUNT = 4
-LIGHTNING_DAMAGE = 12
+HEAL_AMOUNT = [1, 4]
+LIGHTNING_DAMAGE = [2, 12]
 LIGHTNING_RANGE = 5
 CONFUSE_NUM_TURNS = 10
 CONFUSE_RANGE = 8
-FIREBALL_DAMAGE = 6
+FIREBALL_DAMAGE = [1, 6]
 FIREBALL_RADIUS = 3
 LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
@@ -198,9 +198,10 @@ class Item:
 
 class Equipment:
     # an object that can be equipped, yielding bonuses. automatically adds the item component.
-    def __init__(self, slot, to_hit_bonus=0, damage_bonus=0, armor_bonus=0, max_hp_bonus=0):
+    def __init__(self, slot, to_hit_bonus=0, damage_bonus=0, damage_roll=None, armor_bonus=0, max_hp_bonus=0):
         self.to_hit_bonus = to_hit_bonus
         self.damage_bonus = damage_bonus
+        self.damage_roll = damage_roll
         self.armor_bonus = armor_bonus
         self.max_hp_bonus = max_hp_bonus
         self.slot = slot
@@ -232,12 +233,13 @@ class Equipment:
 
 class Fighter:
     # combat-related properties and methods (monster, player, npc)
-    def __init__(self, hp, armor_class, to_hit, damage, xp, death_function=None):
+    def __init__(self, hp, armor_class, to_hit, damage, damage_roll, xp, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
         self.base_armor_class = armor_class
         self.base_to_hit = to_hit
         self.base_damage = damage
+        self.base_roll = damage_roll
         self.xp = xp
         self.death_function = death_function
 
@@ -255,6 +257,13 @@ class Fighter:
     def damage(self): # return actual damage bonus, plus any special bonuses
         bonus = sum(equipment.damage_bonus for equipment in get_all_equipped(self.owner))
         return self.base_damage + bonus
+
+    @property
+    def damage_roll(self): # return current damage roll or roll from equipment
+        for equipment in get_all_equipped(self.owner):
+            if equipment.damage_roll:
+                return equipment.damage_roll
+        return self.base_roll
 
     @property
     def max_hp(self):  # return actual max_hp, by summing up the bonuses from all equipped items
@@ -289,7 +298,7 @@ class Fighter:
             return
 
         # now roll for damage (curr. using OD&D style)
-        damage = rolldice(1,6) + self.damage
+        damage = rolldice(*self.damage_roll) + self.damage
 
         if damage > 0:
             # make the target take some damage
@@ -462,7 +471,8 @@ def new_game():
 
     # create Player object
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
-    fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=0, xp=0, death_function=player_death)
+    fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=0, damage_roll=[1, 3],
+                                xp=0, death_function=player_death)
     player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
     player.level = 1
 
@@ -482,7 +492,7 @@ def new_game():
             libtcod.red)
 
     # initial equipment: a knife
-    equipment_component = Equipment(slot='right hand', damage_bonus=1)
+    equipment_component = Equipment(slot='right hand', damage_roll=[1, 4])
     obj = Object(0, 0, '-', 'combat knife', libtcod.sky, equipment=equipment_component)
     inventory.append(obj)
     equipment_component.equip()
@@ -827,15 +837,15 @@ def place_objects(room):
             choice = random_choice(monster_chances)
             if choice == 'felix':
                 # create a felix
-                fighter_component = Fighter(hp=rolldice(1, 4), armor_class=8, to_hit=0, damage=0, xp=35,
-                                            death_function=monster_death)
+                fighter_component = Fighter(hp=rolldice(1, 4), armor_class=8, to_hit=0, damage=0, damage_roll=[1, 4],
+                                            xp=35, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'f', 'felix', libtcod.light_azure, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
             elif choice == 'nagahide':
                 # create a clawman
-                fighter_component = Fighter(hp=rolldice(2, 12), armor_class=7, to_hit=2, damage=3, xp=100,
-                                            death_function=monster_death)
+                fighter_component = Fighter(hp=rolldice(2, 12), armor_class=7, to_hit=2, damage=3, damage_roll=[1, 12],
+                                            xp=100, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'N', 'nagahide', libtcod.dark_green, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
@@ -870,7 +880,7 @@ def place_objects(room):
                 item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
             elif choice == 'laser_sword':
                 # create a sword
-                equipment_component = Equipment(slot='right hand', damage_bonus=2)
+                equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1])
                 item = Object(x, y, '/', 'laser sword', libtcod.sky, equipment=equipment_component)
             elif choice == 'plexsteel_shield':
                 # create a shield
@@ -1262,8 +1272,9 @@ def cast_heal():
         message('You are already at full health.', libtcod.red)
         return 'cancelled'
 
-    message('Your pain subsides, for now.', libtcod.light_violet)
-    player.fighter.heal(HEAL_AMOUNT)
+    heal_roll = rolldice(*HEAL_AMOUNT)
+    message('Your pain subsides, for now. You restore ' + str(heal_roll) + ' hit points.', libtcod.light_violet)
+    player.fighter.heal(heal_roll)
 
 
 def cast_lightning():
@@ -1276,7 +1287,7 @@ def cast_lightning():
     # zap it!
     message('A bolt of electricity arcs into the ' + monster.name + ' with a loud ZZZAP! The damage is ' + str(
         LIGHTNING_DAMAGE) + ' hit points.', libtcod.light_blue)
-    monster.fighter.take_damage(LIGHTNING_DAMAGE)
+    monster.fighter.take_damage(rolldice(*LIGHTNING_DAMAGE))
 
 
 def cast_confuse():
@@ -1301,8 +1312,9 @@ def cast_fireball():
 
     for obj in objects:  # damage every fighter in range, including the player
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
-            message('The ' + obj.name + ' gets burned for ' + str(FIREBALL_DAMAGE) + ' hit points.', libtcod.orange)
-            obj.fighter.take_damage(FIREBALL_DAMAGE)
+            damage_rolled = rolldice(*FIREBALL_DAMAGE)
+            message('The ' + obj.name + ' gets burned for ' + str(damage_rolled) + ' hit points.', libtcod.orange)
+            obj.fighter.take_damage(damage_rolled)
 
 # ############################################
 # Initialization & Main Loop
