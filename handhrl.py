@@ -808,20 +808,20 @@ def place_objects(room):
     max_monsters = from_dungeon_level([[2, 1], [3, 4], [4, 6], [5, 8]])
 
     # chances of each monster
-    monster_chances = {'felix': 80,
-                       'nagahide': from_dungeon_level([[15, 3], [30, 5], [60, 7]])}
+    monster_chances = {'felix': 1,
+                       'nagahide': from_dungeon_level([[1, 3], [1, 5], [1, 7]])}
 
     # max number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
 
     # chance of each item (0 by default at level 1, goes up)
-    item_chances = {'opacaine': 15,
-                    'vacc_suit': from_dungeon_level([[10, 2]]),
-                    'tesla': from_dungeon_level([[15, 4]]),
-                    'grenade': from_dungeon_level([[10, 6]]),
-                    'confuse': from_dungeon_level([[10, 2]]),
-                    'laser_sword': from_dungeon_level([[10, 4]]),
-                    'plexsteel_shield': from_dungeon_level([[10, 8]])}
+    item_chances = {'opacaine': 1,
+                    'vacc_suit': from_dungeon_level([[1, 2]]),
+                    'tesla': from_dungeon_level([[1, 4]]),
+                    'grenade': from_dungeon_level([[1, 6]]),
+                    'confuse': from_dungeon_level([[1, 2]]),
+                    'laser_sword': from_dungeon_level([[1, 4]]),
+                    'plexsteel_shield': from_dungeon_level([[1, 8]])}
 
     # choose random number of monsters
     num_monsters = libtcod.random_get_int(0, 0, max_monsters)
