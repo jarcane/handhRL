@@ -412,10 +412,15 @@ def show_text_log(text, img=None, delay=True):
         else:
             libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE, libtcod.LEFT,
                                      text[y])
-            libtcod.console_flush()
-            if delay == True:
-                time.sleep(1.5)
 
+            if delay == True:
+                libtcod.console_flush()
+                time.sleep(1.3)
+
+    libtcod.console_set_default_foreground(0, libtcod.white)
+    libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
+                             'Press any key to continue')
+    libtcod.console_flush()
     libtcod.console_wait_for_keypress(True)
 
 
@@ -439,6 +444,24 @@ def intro_sequence():
         'We are sending help *21242056* stay alive.']
 
     show_text_log(intro_msg, generate_screen())
+
+
+def help_screen():
+    # display a message with information about available key commands
+    help_text = [
+        'ESC - Exit to menu, saving game',
+        'Alt+Enter - toggle fullscreen',
+        'NumPad or Arrows - move character',
+        '5 or Space - wait one turn',
+        'h or ? - display this help screen',
+        'g - get item beneath character',
+        'i - inventory/use item',
+        'd - drop item',
+        'c - character status',
+        '< - descend stairs'
+        ]
+
+    show_text_log(help_text, generate_screen(), delay=False)
 
 
 def main_menu():
@@ -642,7 +665,7 @@ def handle_keys(key, mouse):
             player_move_or_attack(-1, 1)
         elif key.vk == libtcod.KEY_PAGEDOWN or key.vk == libtcod.KEY_KP3:
             player_move_or_attack(1, 1)
-        elif key.vk == libtcod.KEY_KP5:
+        elif key.vk == libtcod.KEY_KP5 or key.vk == libtcod.KEY_SPACE:
             pass  # do nothing ie wait for the monster to come to you
         else:
             # test for other keys
@@ -686,6 +709,8 @@ def handle_keys(key, mouse):
                     'Damage Bonus: +' + str(player.fighter.damage),
                     'AC: ' + str(player.fighter.armor_class),
                     ], generate_screen(), delay=False)
+            if key_char == 'h' or key_char == '?':
+                help_screen()
             return 'didnt-take-turn'
 
 
