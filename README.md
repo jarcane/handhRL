@@ -9,6 +9,8 @@ Code is based on the excellent tutorial here: http://www.roguebasin.com/index.ph
 
 Hulks and Horrors is a tabletop roleplaying game inspired by classic Red Box, with a sci-fi reimagining. More on that here: http://www.bedroomwallpress.com/p/hulks-and-horrors.html
 
+Screenshots are available on our official page at: http://www.bedroomwallpress.com/p/handhrl.html
+
 libtcod is distributed under the BSD license. See LIBTCOD-LICENSE.txt. The SDL library is distributed according to the LGPL as mentioned in README-SDL.txt.
 
 handhRL is (c) 2014 by John Berry. Licensing TBD.
