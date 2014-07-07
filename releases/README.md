@@ -1,1 +1,1 @@
-This folder is for storing current official binary releases.
+This folder is for storing current and past official binary releases.
