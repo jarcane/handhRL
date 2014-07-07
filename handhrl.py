@@ -1,3 +1,23 @@
+'''
+handhRL
+Hulks and Horrors: The Roguelike
+
+Copyright 2014 by John S. Berry III
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+'''
+
 import libtcodpy as libtcod
 import math
 import textwrap
@@ -1257,7 +1277,7 @@ def closest_monster(max_range):
 def player_death(player):
     # the game ended!
     global game_state
-    message('You died!', libtcod.red)
+    message('You died! Press Esc to return to the main menu.', libtcod.red)
     game_state = 'dead'
 
     # for added effect, transform player into a corpse!
