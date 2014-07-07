@@ -671,8 +671,10 @@ def handle_keys(key, mouse):
             if key_char == 'c':
                 # show character information
                 level_up_xp = LEVEL_UP_BASE + (player.level * LEVEL_UP_FACTOR)
-                if player.fighter.damage_roll[2]:
+                try:
                     highest = 'H' + str(player.fighter.damage_roll[2])
+                except:
+                    highest = ''
                 show_text_log([
                     'Character Information',
                     'Level: ' + str(player.level),
@@ -944,7 +946,7 @@ def place_objects(room):
             elif choice == 'grenade':
                 # create a grenade
                 item_component = Item(use_function=cast_fireball)
-                item = Object(x, y, '#', 'inciendiary grenade', libtcod.light_yellow, item=item_component)
+                item = Object(x, y, '#', 'incendiary grenade', libtcod.light_yellow, item=item_component)
             elif choice == 'confuse':
                 # create a confuse item
                 item_component = Item(use_function=cast_confuse)
