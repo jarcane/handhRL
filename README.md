@@ -13,7 +13,7 @@ Screenshots are available on our official page at: http://www.bedroomwallpress.c
 
 libtcod is distributed under the BSD license. See LIBTCOD-LICENSE.txt. The SDL library is distributed according to the LGPL as mentioned in README-SDL.txt.
 
-handhRL is (c) 2014 by John Berry. 
+handhRL is Copyright 2014 by John S. Berry III. 
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
