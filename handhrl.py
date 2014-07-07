@@ -808,13 +808,19 @@ def place_objects(room):
     max_monsters = from_dungeon_level([[2, 1], [3, 4], [4, 6], [5, 8]])
 
     # chances of each monster
+    # First value in each tuple is weighted value relative to all other items available at that level
+    # Second value is the dungeon_level at which they become available
+    # As H&H monster tables are flat, we simply use 1 here
     monster_chances = {'felix': 1,
                        'nagahide': from_dungeon_level([[1, 3], [1, 5], [1, 7]])}
 
     # max number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
 
-    # chance of each item (0 by default at level 1, goes up)
+    # chance of each item
+    # functions the same as the monster chances (weighted values, availability by level)
+    # future revisions should break this down by type instead of individual item, resolving specific items in the
+    # sub entries below.
     item_chances = {'opacaine': 1,
                     'vacc_suit': from_dungeon_level([[1, 2]]),
                     'tesla': from_dungeon_level([[1, 4]]),
