@@ -1137,7 +1137,13 @@ def menu(header, options, width):
 
     # present the root console to the player and wait for keypress
     libtcod.console_flush()
-    key = libtcod.console_wait_for_keypress(True)
+    input_valid = False
+    while not input_valid:
+        key = libtcod.console_wait_for_keypress(True)
+        if key.pressed:
+            key = libtcod.console_wait_for_keypress(False)
+            if not key.pressed:
+                input_valid = True
 
     if key.vk == libtcod.KEY_ENTER and key.lalt:  # special case, have to check for alt+enter for fullscreen
         libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
