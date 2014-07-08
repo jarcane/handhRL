@@ -143,16 +143,20 @@ class Object:
         libtcod.console_put_char(con, self.x, self.y, ' ', libtcod.BKGND_NONE)
 
     def move_towards(self, target_x, target_y):
-        # vector from this object to the target, and distance
-        dx = target_x - self.x
-        dy = target_y - self.y
-        distance = math.sqrt(dx ** 2 + dy ** 2)
+        # create and compute a path for the object to the target
+        path = libtcod.path_new_using_map(fov_map)
+        libtcod.path_compute(path, self.x, self.y, target_x, target_y)
 
-        # normalise it to length 1 (preserving direction) then round it and
-        # convert to integer so the movement is restricted to map grid
-        dx = int(round(dx / distance))
-        dy = int(round(dy / distance))
-        self.move(dx, dy)
+        # get the target coords of the next spot on the path
+        mx, my, = libtcod.path_walk(path, True)
+        if mx is not None:
+            dx = mx - self.x
+            dy = my - self.y
+            self.move(dx, dy)
+            libtcod.path_delete(path)
+        else:
+            libtcod.path_delete(path)
+            return
 
     def distance(self, x, y):
         # return the distance to some coordinates
