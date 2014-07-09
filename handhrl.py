@@ -414,6 +414,7 @@ def show_text_log(text, img=None, delay=True, center_first_line=False):
 
     for y in range(len(text)):
         key = libtcod.console_check_for_keypress()
+
         if key.vk == libtcod.KEY_ESCAPE:
             return
         else:
@@ -427,6 +428,9 @@ def show_text_log(text, img=None, delay=True, center_first_line=False):
             if delay == True:
                 libtcod.console_flush()
                 time.sleep(1.3)
+                key = libtcod.console_check_for_keypress()
+                if key.vk == libtcod.KEY_SPACE:
+                    delay = False
 
     libtcod.console_set_default_foreground(0, libtcod.white)
     libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
