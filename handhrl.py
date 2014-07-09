@@ -97,7 +97,7 @@ class Object:
     # this is a generic object: the player, a monster, an item, the stairs...
     # it's always represented by a character on the screen.
     def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None,
-                 equipment=None):
+                 equipment=None, seen_player=False):
         self.x = x
         self.y = y
         self.char = char
@@ -124,6 +124,8 @@ class Object:
             # there must be an item component for the equipment component to work properly
             self.item = Item()
             self.item.owner = self
+
+        self.seen_player = seen_player
 
 
     def move(self, dx, dy):
@@ -331,7 +333,7 @@ class Fighter:
             target.fighter.take_damage(damage)
         else:
             message(self.owner.name.capitalize() + ' hits the ' + target.name + ' but it has no effect!',
-                    libtcod.normal_grey)
+                    libtcod.grey)
 
 
 class BasicMonster:
@@ -343,9 +345,11 @@ class BasicMonster:
         # a basic monster takes its turn. If you can see it, it can see you
         monster = self.owner
         if libtcod.map_is_in_fov(fov_map, monster.x, monster.y):
+            monster.seen_player = True
 
+        if monster.seen_player:
             # move towards the player if far away
-            if monster.distance_to(player) >= 2:
+            if 2 <= monster.distance_to(player) <= 10:
                 monster.move_towards(player.x, player.y)
 
             # close enough, attack!
@@ -1000,7 +1004,7 @@ def place_objects(room):
                 # determine sword bonus, if any.
                 sword_bonus = rolldice(1, 3) - 1
                 if sword_bonus > 0:
-                    sword_name = '+ ' + str(sword_bonus) + ' laser sword'
+                    sword_name = '+' + str(sword_bonus) + ' laser sword'
                 else:
                     sword_name = 'laser sword'
                 equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1], to_hit_bonus=sword_bonus,
@@ -1014,7 +1018,7 @@ def place_objects(room):
                 else:
                     shield_name = 'plexsteel shield'
                 equipment_component = Equipment(slot='left hand', armor_bonus=-1+shield_bonus)
-                item = Object(x, y, '[', 'plexsteel shield', libtcod.darker_orange, equipment=equipment_component)
+                item = Object(x, y, '[', shield_name, libtcod.darker_orange, equipment=equipment_component)
             elif choice == 'vacc_suit':
                 # create vacc suit armor
                 armor_bonus = rolldice(1, 3) - 3
@@ -1026,7 +1030,6 @@ def place_objects(room):
                 item = Object(x, y, ']', armor_name, libtcod.silver, equipment=equipment_component)
             objects.append(item)
             item.send_to_back()  # items appear below other objects
-
 
 def make_map():
     global map, objects, stairs
