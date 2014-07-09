@@ -24,6 +24,8 @@ import textwrap
 import shelve
 import time
 import os
+import operator
+
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
@@ -96,7 +98,7 @@ class Object:
     # this is a generic object: the player, a monster, an item, the stairs...
     # it's always represented by a character on the screen.
     def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None,
-                 equipment=None, seen_player=False):
+                 equipment=None, seen_player=False, killed_by=None):
         self.x = x
         self.y = y
         self.char = char
@@ -125,6 +127,7 @@ class Object:
             self.item.owner = self
 
         self.seen_player = seen_player
+        self.killed_by = killed_by
 
 
     def move(self, dx, dy):
@@ -295,15 +298,16 @@ class Fighter:
         bonus = sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
         return self.base_max_hp + bonus
 
-    def take_damage(self, damage):
+    def take_damage(self, damage, killed_by):
         # apply damage if possible
         if damage > 0:
             self.hp -= damage
 
-        # check for death. if there's a death function, call it
+        # check for death. if there's a death function, call it, and update 'killed_by' to name of attacker
         if self.hp <= 0:
             function = self.death_function
             if function is not None:
+                self.owner.killed_by = killed_by
                 function(self.owner)
 
             if self.owner != player:  # yield xp to player
@@ -329,7 +333,7 @@ class Fighter:
             # make the target take some damage
             message(self.owner.name.capitalize() + ' hits the ' + target.name + ' for ' + str(damage) + ' hit points.',
                     libtcod.yellow)
-            target.fighter.take_damage(damage)
+            target.fighter.take_damage(damage, self.owner.name)
         else:
             message(self.owner.name.capitalize() + ' hits the ' + target.name + ' but it has no effect!',
                     libtcod.grey)
@@ -504,7 +508,7 @@ def main_menu():
             newopt = 'Play a new game'
 
         # show options and wait for the player's choice
-        choice = menu('', [newopt, 'Continue last save', 'Quit'], 26)
+        choice = menu('', [newopt, 'Continue last save', 'Display high scores', 'Quit'], 26)
 
         if choice == 0:
             new_game()
@@ -518,6 +522,12 @@ def main_menu():
                 continue
             play_game()
         elif choice == 2:
+            try:
+                show_scores()
+            except:
+                msgbox('\n No high scores yet!\n',24)
+                continue
+        elif choice == 3:
             break
 
 
@@ -637,6 +647,45 @@ def load_game():
 
     initialize_fov()
 
+
+def new_score(player):
+    # generate a new score from player and dungeon_level, save it to file, then ask to display it.
+    score = player.fighter.xp * player.level * (13 - dungeon_level)
+    score_data = [score, player.name.capitalize(), player.killed_by, str(dungeon_level)]
+
+    scores = shelve.open('scorefile', 'c', writeback=True)
+    if 'scores' in scores:
+        list = scores['scores']
+        list.append(score_data)
+        scores['scores'] = list
+    else:
+        new_list = [score_data]
+        scores['scores'] = new_list
+    scores.close()
+
+    choice = menu('Do you want to see your score?', ['Yes','No'], 32)
+    if choice == 0:
+        show_scores()
+
+
+def show_scores():
+    # load the score file, sort the list by score, then display
+    score_file = shelve.open('scorefile','r')
+    scores = score_file['scores']
+    scores.sort(key=operator.itemgetter(0), reverse=True)
+    score_list = ['High Scores']
+    c = 0
+    for i in scores:
+        n_score = str(c + 1) + '. ' + str(scores[c][0]) + '  ' + scores[c][1] + ', killed by ' + scores[c][2]
+        n_score += ' on cave level ' + scores[c][3]
+        score_list.append(n_score)
+        c += 1
+        if c > 10:
+            break
+
+    score_file.close()
+
+    show_text_log(score_list, generate_starpic(), delay=False, center_first_line=True)
 
 def end_game():
     ending = [
@@ -1370,6 +1419,7 @@ def player_death(player):
     # for added effect, transform player into a corpse!
     player.char = '%'
     player.color = libtcod.white
+    new_score(player)
 
 
 def monster_death(monster):
@@ -1451,7 +1501,7 @@ def cast_lightning():
     damage = rolldice(*LIGHTNING_DAMAGE)
     message('A bolt of electricity arcs into the ' + monster.name + ' with a loud ZZZAP! The damage is ' + str(
         damage) + ' hit points.', libtcod.light_blue)
-    monster.fighter.take_damage(damage)
+    monster.fighter.take_damage(damage, 'electrical discharge')
 
 
 def cast_confuse():
@@ -1478,7 +1528,7 @@ def cast_fireball():
         if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
             damage_rolled = rolldice(*FIREBALL_DAMAGE)
             message('The ' + obj.name + ' gets burned for ' + str(damage_rolled) + ' hit points.', libtcod.orange)
-            obj.fighter.take_damage(damage_rolled)
+            obj.fighter.take_damage(damage_rolled, 'own fireball')
 
 # ############################################
 # Initialization & Main Loop
