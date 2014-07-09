@@ -282,12 +282,12 @@ class Fighter:
         return self.base_armor_class + bonus
 
     @property
-    def damage(self): # return actual damage bonus, plus any special bonuses
+    def damage(self):  # return actual damage bonus, plus any special bonuses
         bonus = sum(equipment.damage_bonus for equipment in get_all_equipped(self.owner))
         return self.base_damage + bonus
 
     @property
-    def damage_roll(self): # return current damage roll or roll from equipment
+    def damage_roll(self):  # return current damage roll or roll from equipment
         for equipment in get_all_equipped(self.owner):
             if equipment.damage_roll:
                 return equipment.damage_roll
@@ -311,7 +311,7 @@ class Fighter:
 
             if self.owner != player:  # yield xp to player
                 player.fighter.xp += self.xp
-                player.fighter.score += self.xp # yield score to the player
+                player.fighter.score += self.xp  # yield score to the player
 
     def heal(self, amount):
         # heal by the given amount, without going over max_hp
@@ -427,7 +427,7 @@ def show_text_log(text, img=None, delay=True):
                 time.sleep(1.3)
 
     libtcod.console_set_default_foreground(0, libtcod.white)
-    libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
+    libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
                              'Press any key to continue')
     libtcod.console_flush()
     libtcod.console_wait_for_keypress(True)
@@ -468,7 +468,7 @@ def help_screen():
         'd - drop item',
         'c - character status',
         '< - descend stairs'
-        ]
+    ]
 
     show_text_log(help_text, generate_screen(), delay=False)
 
@@ -477,6 +477,7 @@ def main_menu():
     # The main game menu.
 
     img = generate_starpic()
+    highScores = HighScore()
 
     while not libtcod.console_is_window_closed():
         # show the background image, at twice the regular resolution
@@ -510,7 +511,7 @@ def main_menu():
                 continue
             play_game()
         elif choice == 2:
-            highScores = HighScore()
+
             highScores.display()
         elif choice == 3:
             break
@@ -526,7 +527,8 @@ def new_game():
 
     # create Player object
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
-    fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=1, damage_roll=[1, 3],
+    fighter_component = Fighter(hp=rolldice(3, 6) + rolldice(1, 10), armor_class=10, to_hit=1, damage=1,
+                                damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
     player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
     player.level = 1
@@ -646,18 +648,18 @@ def end_game():
         '...',
         '*silence*'
     ]
-    
+
     show_text_log(ending, generate_starpic())
-    
+
     score = {}
     score['name'] = 'Soldier'
     score['date'] = datetime.now()
     score['score'] = player.fighter.score
-    
-    highScores = Highscore()
+
+    highScores = HighScore()
     highScores.addScore(score)
     highScores.display()
-    
+
     os.remove('savegame')
     main_menu()
 
@@ -721,16 +723,17 @@ def handle_keys(key, mouse):
                 except:
                     highest = ''
                 show_text_log([
-                    'Character Information',
-                    'Level: ' + str(player.level),
-                    'Experience: ' + str(player.fighter.xp),
-                    'Experience to level up: ' + str(level_up_xp),
-                    'Maximum HP: ' + str(player.fighter.max_hp),
-                    'To-hit: +' + str(player.fighter.to_hit),
-                    'Damage: ' + str(player.fighter.damage_roll[0]) + 'd' + str(player.fighter.damage_roll[1]) + highest,
-                    'Damage Bonus: +' + str(player.fighter.damage),
-                    'AC: ' + str(player.fighter.armor_class),
-                    ], generate_screen(), delay=False)
+                                  'Character Information',
+                                  'Level: ' + str(player.level),
+                                  'Experience: ' + str(player.fighter.xp),
+                                  'Experience to level up: ' + str(level_up_xp),
+                                  'Maximum HP: ' + str(player.fighter.max_hp),
+                                  'To-hit: +' + str(player.fighter.to_hit),
+                                  'Damage: ' + str(player.fighter.damage_roll[0]) + 'd' + str(
+                                      player.fighter.damage_roll[1]) + highest,
+                                  'Damage Bonus: +' + str(player.fighter.damage),
+                                  'AC: ' + str(player.fighter.armor_class),
+                              ], generate_screen(), delay=False)
             if key_char == 'h' or key_char == '?':
                 help_screen()
             return 'didnt-take-turn'
@@ -1266,7 +1269,7 @@ def render_all():
     libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
 
     # display names of objects under player on right side of panel
-    libtcod.console_print_ex(panel, SCREEN_WIDTH-2, 0, libtcod.BKGND_NONE, libtcod.RIGHT, get_names_under_player())
+    libtcod.console_print_ex(panel, SCREEN_WIDTH - 2, 0, libtcod.BKGND_NONE, libtcod.RIGHT, get_names_under_player())
 
     # blit the contents of "panel" to root console
     libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
@@ -1359,12 +1362,12 @@ def player_death(player):
     # for added effect, transform player into a corpse!
     player.char = '%'
     player.color = libtcod.white
-    
+
     score = {}
     score['name'] = 'Soldier'
     score['date'] = datetime.now()
     score['score'] = player.fighter.score
-    
+
     highScores = HighScore()
     highScores.addScore(score)
     highScores.display()
