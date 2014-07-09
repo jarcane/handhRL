@@ -403,7 +403,7 @@ def generate_screen():
     return screen_img
 
 
-def show_text_log(text, img=None, delay=True):
+def show_text_log(text, img=None, delay=True, center_first_line=False):
     # takes list of text and displays it line by line against a black screen
     # optional parameters: img = an image based in libtcod.image format, defaults to None (black screen)
     # delay = whether to use the text delay, defaults to True (for cinematic style sequences)
@@ -418,8 +418,12 @@ def show_text_log(text, img=None, delay=True):
         if key.vk == libtcod.KEY_ESCAPE:
             return
         else:
-            libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE, libtcod.LEFT,
-                                     text[y])
+            if center_first_line and y == 0:
+                libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE,
+                                         libtcod.CENTER, text[y])
+            else:
+                libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE,
+                                         libtcod.LEFT, text[y])
 
             if delay == True:
                 libtcod.console_flush()
@@ -457,6 +461,8 @@ def intro_sequence():
 def help_screen():
     # display a message with information about available key commands
     help_text = [
+        'Game Controls',
+        '',
         'ESC - Exit to menu, saving game',
         'Alt+Enter - toggle fullscreen',
         'NumPad or Arrows - move character',
@@ -469,7 +475,7 @@ def help_screen():
         '< - descend stairs'
         ]
 
-    show_text_log(help_text, generate_screen(), delay=False)
+    show_text_log(help_text, generate_screen(), delay=False, center_first_line=True)
 
 
 def main_menu():
