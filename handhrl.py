@@ -600,7 +600,7 @@ def play_game():
 
         # handle keys and exit game if needed
         player_action = handle_keys(key, mouse)
-        if player_action == 'exit' and game_state == 'dead':
+        if game_state == 'dead':
             try:
                 os.remove('savegame')
             except:
@@ -663,7 +663,7 @@ def new_score(player):
         scores['scores'] = new_list
     scores.close()
 
-    choice = menu('Do you want to see your score?', ['Yes','No'], 32)
+    choice = menu('Game Over\n', ['See your score','Return to main menu'], 20)
     if choice == 0:
         show_scores()
 
@@ -1413,7 +1413,8 @@ def closest_monster(max_range):
 def player_death(player):
     # the game ended!
     global game_state
-    message('You died! Press Esc to return to the main menu.', libtcod.red)
+    message('You died!', libtcod.red)
+    render_all()
     game_state = 'dead'
 
     # for added effect, transform player into a corpse!
