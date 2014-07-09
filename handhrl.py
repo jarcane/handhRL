@@ -586,13 +586,10 @@ def play_game():
         # handle keys and exit game if needed
         player_action = handle_keys(key, mouse)
         if player_action == 'exit' and game_state == 'dead':
-            score_player(player)
             try:
                 os.remove('savegame')
-
             except:
                 break
-
         elif player_action == 'exit':
             save_game()
             break
@@ -652,7 +649,14 @@ def end_game():
     
     show_text_log(ending, generate_starpic())
     
-    score_player(player)
+    score = {}
+    score['name'] = 'Soldier'
+    score['date'] = datetime.now()
+    score['score'] = player.fighter.score
+    
+    highScores = Highscore()
+    highScores.addScore(score)
+    highScores.display()
     
     os.remove('savegame')
     main_menu()
@@ -1349,23 +1353,20 @@ def closest_monster(max_range):
 def player_death(player):
     # the game ended!
     global game_state
-    message('You died! Press Esc to see scores.', libtcod.red)
+    message('You died! Press Esc to return to the main menu.', libtcod.red)
     game_state = 'dead'
 
     # for added effect, transform player into a corpse!
     player.char = '%'
     player.color = libtcod.white
-
-
-def score_player(player):
-    # append the player's score to the scorefile and display.
+    
     score = {}
-    score['name'] = player.name
+    score['name'] = 'Soldier'
     score['date'] = datetime.now()
     score['score'] = player.fighter.score
     
     highScores = HighScore()
-    highScores.addscore(score)
+    highScores.addScore(score)
     highScores.display()
 
 
