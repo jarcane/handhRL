@@ -23,10 +23,7 @@ import math
 import textwrap
 import shelve
 import time
-from datetime import datetime
 import os
-
-from HighScore import HighScore
 
 SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
@@ -269,7 +266,6 @@ class Fighter:
         self.base_roll = damage_roll
         self.xp = xp
         self.death_function = death_function
-        self.score = xp
 
     @property
     def to_hit(self):
@@ -311,7 +307,6 @@ class Fighter:
 
             if self.owner != player:  # yield xp to player
                 player.fighter.xp += self.xp
-                player.fighter.score += self.xp # yield score to the player
 
     def heal(self, amount):
         # heal by the given amount, without going over max_hp
@@ -496,7 +491,7 @@ def main_menu():
             newopt = 'Play a new game'
 
         # show options and wait for the player's choice
-        choice = menu('', [newopt, 'Continue last save', 'High Scores', 'Quit'], 26)
+        choice = menu('', [newopt, 'Continue last save', 'Quit'], 26)
 
         if choice == 0:
             new_game()
@@ -510,9 +505,6 @@ def main_menu():
                 continue
             play_game()
         elif choice == 2:
-            highScores = HighScore()
-            highScores.display()
-        elif choice == 3:
             break
 
 
@@ -646,18 +638,8 @@ def end_game():
         '...',
         '*silence*'
     ]
-    
+
     show_text_log(ending, generate_starpic())
-    
-    score = {}
-    score['name'] = 'Soldier'
-    score['date'] = datetime.now()
-    score['score'] = player.fighter.score
-    
-    highScores = Highscore()
-    highScores.addScore(score)
-    highScores.display()
-    
     os.remove('savegame')
     main_menu()
 
@@ -1359,15 +1341,6 @@ def player_death(player):
     # for added effect, transform player into a corpse!
     player.char = '%'
     player.color = libtcod.white
-    
-    score = {}
-    score['name'] = 'Soldier'
-    score['date'] = datetime.now()
-    score['score'] = player.fighter.score
-    
-    highScores = HighScore()
-    highScores.addScore(score)
-    highScores.display()
 
 
 def monster_death(monster):
