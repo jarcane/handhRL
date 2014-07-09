@@ -997,16 +997,33 @@ def place_objects(room):
                 item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
             elif choice == 'laser_sword':
                 # create a sword
-                equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1])
-                item = Object(x, y, '/', 'laser sword', libtcod.sky, equipment=equipment_component)
+                # determine sword bonus, if any.
+                sword_bonus = rolldice(1, 3) - 1
+                if sword_bonus > 0:
+                    sword_name = '+ ' + str(sword_bonus) + ' laser sword'
+                else:
+                    sword_name = 'laser sword'
+                equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1], to_hit_bonus=sword_bonus,
+                                                damage_bonus=sword_bonus)
+                item = Object(x, y, '/', sword_name, libtcod.sky, equipment=equipment_component)
             elif choice == 'plexsteel_shield':
                 # create a shield
-                equipment_component = Equipment(slot='left hand', armor_bonus=-1)
+                shield_bonus = rolldice(1, 3) - 3
+                if shield_bonus < 0:
+                    shield_name = str(shield_bonus) + ' plexsteel shield'
+                else:
+                    shield_name = 'plexsteel shield'
+                equipment_component = Equipment(slot='left hand', armor_bonus=-1+shield_bonus)
                 item = Object(x, y, '[', 'plexsteel shield', libtcod.darker_orange, equipment=equipment_component)
             elif choice == 'vacc_suit':
                 # create vacc suit armor
-                equipment_component = Equipment(slot='armor', armor_bonus=-2)
-                item = Object(x, y, ']', 'vacc suit', libtcod.silver, equipment=equipment_component)
+                armor_bonus = rolldice(1, 3) - 3
+                if armor_bonus < 0:
+                    armor_name = str(armor_bonus) + ' vacc suit'
+                else:
+                    armor_name = 'vacc suit'
+                equipment_component = Equipment(slot='armor', armor_bonus=-2+armor_bonus)
+                item = Object(x, y, ']', armor_name, libtcod.silver, equipment=equipment_component)
             objects.append(item)
             item.send_to_back()  # items appear below other objects
 
