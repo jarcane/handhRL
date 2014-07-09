@@ -50,10 +50,9 @@ CONFUSE_NUM_TURNS = 10
 CONFUSE_RANGE = 8
 FIREBALL_DAMAGE = [1, 6]
 FIREBALL_RADIUS = 3
-LEVEL_UP_BASE = 200
-LEVEL_UP_FACTOR = 150
-LEVEL_SCREEN_WIDTH = 40
-CHARACTER_SCREEN_WIDTH = 30
+LEVEL_UP_BASE = 300
+LEVEL_UP_FACTOR = 200
+
 
 color_dark_wall = libtcod.Color(128, 128, 128)
 color_light_wall = libtcod.Color(130, 110, 50)
@@ -942,7 +941,7 @@ def place_objects(room):
             elif choice == 'nagahide':
                 # create a nagahide
                 fighter_component = Fighter(hp=rolldice(2, 12), armor_class=7, to_hit=2, damage=0, damage_roll=[1, 12],
-                                            xp=100, death_function=monster_death)
+                                            xp=75, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'N', 'nagahide', libtcod.dark_green, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
@@ -954,25 +953,25 @@ def place_objects(room):
                                  ai=ai_component)
             elif choice == 'paleworm':
                 fighter_component = Fighter(hp=rolldice(5, 6), armor_class=6, to_hit=2, damage=0, damage_roll=[2, 6],
-                                            xp=150, death_function=monster_death)
+                                            xp=125, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'P', 'paleworm', libtcod.pink, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
             elif choice == 'centipod':
                 fighter_component = Fighter(hp=rolldice(5, 6), armor_class=4, to_hit=1, damage=0, damage_roll=[2, 6],
-                                            xp=200, death_function=monster_death)
+                                            xp=150, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'c', 'centipod', libtcod.black, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
             elif choice == 'living_weapon':
                 fighter_component = Fighter(hp=rolldice(6, 12), armor_class=2, to_hit=6, damage=0, damage_roll=[3, 12],
-                                            xp=300, death_function=monster_death)
+                                            xp=200, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'L', 'living weapon', libtcod.dark_gray, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
             elif choice == 'megaworm':
                 fighter_component = Fighter(hp=rolldice(8, 10), armor_class=2, to_hit=4, damage=0, damage_roll=[4, 10],
-                                            xp=500, death_function=monster_death)
+                                            xp=300, death_function=monster_death)
                 ai_component = BasicMonster()
                 monster = Object(x, y, 'M', 'megaworm', libtcod.silver, blocks=True, fighter=fighter_component,
                                  ai=ai_component)
@@ -1265,7 +1264,7 @@ def render_all():
     # show the player's stats
     level_up_xp = LEVEL_UP_BASE + (player.level * LEVEL_UP_FACTOR)
     render_bar(1, 1, BAR_WIDTH, 'HP', player.fighter.hp, player.fighter.max_hp, libtcod.light_red, libtcod.darker_red)
-    render_bar(1, 2, BAR_WIDTH, 'XP', player.fighter.xp, level_up_xp, libtcod.green, libtcod.grey)
+    render_bar(1, 2, BAR_WIDTH, 'XP', player.fighter.xp, level_up_xp, libtcod.dark_green, libtcod.grey)
     libtcod.console_print_ex(panel, 1, 4, libtcod.BKGND_NONE, libtcod.LEFT, 'Exp. level ' + str(player.level))
     libtcod.console_print_ex(panel, 1, 5, libtcod.BKGND_NONE, libtcod.LEFT, 'Cave level ' + str(dungeon_level))
 
@@ -1412,13 +1411,18 @@ def check_level_up():
                 libtcod.yellow)
         render_all()  # re-render console so that message plays before menu
 
-        hit_die = rolldice(1, 10)
+        #check player level, roll 1d10 for new HP if 6 or less, or just +3 (see H&H rulebook)
+        if player.level <= 6:
+            hit_die = rolldice(1, 10)
+        else:
+            hit_die = 3
         player.fighter.max_hp += hit_die
         player.fighter.hp += hit_die
 
-        player.fighter.base_to_hit += 1
-
-        player.fighter.base_damage += 1
+        # after level six, to_hit and damage only improve on even levels.
+        if player.level <= 6 or player.level % 2 == 0:
+            player.fighter.base_to_hit += 1
+            player.fighter.base_damage += 1
 
 
 def cast_heal():
@@ -1440,9 +1444,10 @@ def cast_lightning():
         return 'cancelled'
 
     # zap it!
+    damage = rolldice(*LIGHTNING_DAMAGE)
     message('A bolt of electricity arcs into the ' + monster.name + ' with a loud ZZZAP! The damage is ' + str(
-        LIGHTNING_DAMAGE) + ' hit points.', libtcod.light_blue)
-    monster.fighter.take_damage(rolldice(*LIGHTNING_DAMAGE))
+        damage) + ' hit points.', libtcod.light_blue)
+    monster.fighter.take_damage(damage)
 
 
 def cast_confuse():
