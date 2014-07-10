@@ -676,8 +676,8 @@ def show_scores():
     score_list = ['High Scores']
     c = 0
     for i in scores:
-        n_score = str(c + 1) + '. ' + str(scores[c][0]) + '  ' + scores[c][1] + ', killed by ' + scores[c][2]
-        n_score += ' on cave level ' + scores[c][3]
+        n_score = str(c + 1) + '. ' + '{0: >8}'.format(str(scores[c][0])) + '  ' + scores[c][1]
+        n_score += ', killed by ' + scores[c][2] + ' on cave level ' + scores[c][3]
         score_list.append(n_score)
         c += 1
         if c > 10:
