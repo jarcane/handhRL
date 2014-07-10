@@ -663,7 +663,7 @@ def new_score(player):
         scores['scores'] = new_list
     scores.close()
 
-    choice = menu('Game Over\n', ['See your score','Return to main menu'], 20)
+    choice = menu('Game Over\n', ['See your score','Return to main menu'], 22)
     if choice == 0:
         show_scores()
 
@@ -1534,7 +1534,7 @@ def cast_fireball():
 # ############################################
 # Initialization & Main Loop
 # ############################################
-libtcod.console_set_custom_font('terminal8x8_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+libtcod.console_set_custom_font('terminal16x16_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Hulks and Horrors', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
