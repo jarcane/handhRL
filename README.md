@@ -1,9 +1,36 @@
 handhRL
 =======
 
+### Description
 A simple roguelike based on the Hulks and Horrors tabletop RPG written with Python 2.7 and libtcod.
 
 As of now the engine is complete, but additional work will be needed to build it up to a more accurate representation of the source. The eventual goal is to be as accurate a representation of the H&H rules as can be managed, allowing for adjustment to the form.
+
+### Instructions
+#### On Windows:
+
+From source (requires Python 2.7 properly set in $path):
+
+`python handhrl.py (or double-click handhrl.py)`
+
+For binary releases, extract the zip and just run handhrl.exe.
+
+#### On Linux
+A convenient shell script has been provided to automatically select the correct version of libtcod, create symlinks to the right *.so files, and then run the game.
+
+Just make sure that handh.sh is properly set to executable and run it from the handhRL directory.
+
+```
+chmod +x ./handh.sh
+./handh.sh
+```
+
+Note that this need only be run once, after which you should be able to run it from the directory as normal with:
+
+`python handhrl.py`
+
+### Credits and Licensing
+handhRL is currently maintained by John 'jarcane' Berry.
 
 Code is based on the excellent tutorial here: http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod
 
