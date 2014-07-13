@@ -323,7 +323,7 @@ class Fighter:
         # first check for successful attack
         to_hit_target = self.to_hit + target.fighter.armor_class + 5
         if rolldice(1, 20) >= to_hit_target:
-            message(self.owner.name.capitalize() + ' misses the ' + target.name + '.')
+            message(self.owner.name.title() + ' misses the ' + target.name + '.')
             return
 
         # now roll for damage (curr. using OD&D style)
@@ -331,11 +331,11 @@ class Fighter:
 
         if damage > 0:
             # make the target take some damage
-            message(self.owner.name.capitalize() + ' hits the ' + target.name + ' for ' + str(damage) + ' hit points.',
+            message(self.owner.name.title() + ' hits the ' + target.name + ' for ' + str(damage) + ' hit points.',
                     libtcod.yellow)
             target.fighter.take_damage(damage, self.owner.name)
         else:
-            message(self.owner.name.capitalize() + ' hits the ' + target.name + ' but it has no effect!',
+            message(self.owner.name.title() + ' hits the ' + target.name + ' but it has no effect!',
                     libtcod.grey)
 
 
@@ -543,7 +543,8 @@ def new_game():
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
     fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=1, damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
-    player = Object(0, 0, chr(1), get_text_entry(), libtcod.white, blocks=True, fighter=fighter_component)
+    player = Object(0, 0, chr(1), get_text_entry('What is your name, Ensign?', generate_screen()),
+                    libtcod.white, blocks=True, fighter=fighter_component)
     player.level = 1
 
     # generate map
@@ -651,7 +652,7 @@ def load_game():
 def new_score(player):
     # generate a new score from player and dungeon_level, save it to file, then ask to display it.
     score = player.fighter.xp * player.level * (13 - dungeon_level)
-    score_data = [score, player.name.capitalize(), player.killed_by, str(dungeon_level)]
+    score_data = [score, player.name.title(), player.killed_by, str(dungeon_level)]
 
     scores = shelve.open('scorefile', 'c', writeback=True)
     if 'scores' in scores:
@@ -676,7 +677,7 @@ def show_scores():
     score_list = ['High Scores']
     c = 0
     for i in scores:
-        n_score = str(c + 1) + '. ' + '{0: >8}'.format(str(scores[c][0])) + '  ' + scores[c][1]
+        n_score = '{0: >3}'.format(str(c + 1)) + '. ' + '{0: >8}'.format(str(scores[c][0])) + '  ' + scores[c][1]
         n_score += ', killed by ' + scores[c][2] + ' on cave level ' + scores[c][3]
         score_list.append(n_score)
         c += 1
@@ -766,6 +767,7 @@ def handle_keys(key, mouse):
                     highest = ''
                 show_text_log([
                     'Character Information',
+                    'Name: ' + player.name,
                     'Level: ' + str(player.level),
                     'Experience: ' + str(player.fighter.xp),
                     'Experience to level up: ' + str(level_up_xp),
@@ -828,7 +830,7 @@ def get_names_under_mouse():
         names = 'Under mouse: ' + names
     else:
         names = ''
-    return names.capitalize()
+    return names.title()
 
 
 def get_names_under_player():
@@ -839,13 +841,20 @@ def get_names_under_player():
         names = 'Under player: ' + names
     else:
         names = ''
-    return names.capitalize()
+    return names.title()
 
 
-def get_text_entry():
+def get_text_entry(header, img):
     timer = 0
     command = ""
     cursor = 0
+    x = SCREEN_HEIGHT / 3
+    y = (SCREEN_HEIGHT / 4) + 2
+
+    libtcod.image_blit_2x(img, 0, 0, 0)
+    libtcod.console_set_default_foreground(0, libtcod.green)
+
+    libtcod.console_print_ex(0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4, libtcod.BKGND_NONE, libtcod.LEFT, header)
 
     while not libtcod.console_is_window_closed():
 
@@ -855,15 +864,15 @@ def get_text_entry():
         if timer % (LIMIT_FPS // 4) == 0:
             if timer % (LIMIT_FPS // 2) == 0:
                 timer = 0
-                libtcod.console_set_char(0, cursor,  0, "_")
-                libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)
+                libtcod.console_set_char(0, cursor + x,  y, "_")
+                libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)
             else:
-                libtcod.console_set_char(0, cursor,  0, " ")
-                libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)
+                libtcod.console_set_char(0, cursor + x,  y, " ")
+                libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)
 
         if key.vk == libtcod.KEY_BACKSPACE and cursor > 0:
-            libtcod.console_set_char(0, cursor,  0, " ")
-            libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)
+            libtcod.console_set_char(0, cursor + x,  y, " ")
+            libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)
             command = command[:-1]
             cursor -= 1
         elif key.vk == libtcod.KEY_ENTER:
@@ -873,8 +882,8 @@ def get_text_entry():
             break
         elif key.c > 0:
             letter = chr(key.c)
-            libtcod.console_set_char(0, cursor, 0, letter)  #print new character at appropriate position on screen
-            libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)  #make it white or something
+            libtcod.console_set_char(0, cursor + x,  y, letter)  #print new character at appropriate position on screen
+            libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)  #make it white or something
             command += letter  #add to the string
             cursor += 1
 
@@ -1466,7 +1475,7 @@ def player_death(player):
 def monster_death(monster):
     # transform it into a nasty corpse! it doesn't block, can't be
     # attacked, and doesn't move
-    message(monster.name.capitalize() + ' is dead! You gain ' + str(monster.fighter.xp) + ' experience points.',
+    message(monster.name.title() + ' is dead! You gain ' + str(monster.fighter.xp) + ' experience points.',
             libtcod.orange)
     monster.char = '%'
     monster.color = libtcod.dark_red
