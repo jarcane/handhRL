@@ -2,15 +2,7 @@ debug_py.bat
 libtcod-1.5.1-mingw32.zip
 Thumbs.db
 savegame
-.idea/workspace.xml
-.idea/vcs.xml
-.idea/scopes/scope_settings.xml
-.idea/modules.xml
-.idea/misc.xml
-.idea/handhRL.iml
-.idea/encodings.xml
-.idea/.name
-.idea/codeStyleSettings.xml
-.idea/dictionaries/BearBear.xml
+scorefile
+.idea/*
 build/*
 dist/*
