@@ -543,7 +543,7 @@ def new_game():
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
     fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=1, damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
-    player = Object(0, 0, chr(1), 'player', libtcod.white, blocks=True, fighter=fighter_component)
+    player = Object(0, 0, chr(1), get_text_entry(), libtcod.white, blocks=True, fighter=fighter_component)
     player.level = 1
 
     # generate map
@@ -833,7 +833,7 @@ def get_names_under_mouse():
 
 def get_names_under_player():
     names = [obj.name for obj in objects
-             if obj.x == player.x and obj.y == player.y and obj.name != 'player']
+             if obj.x == player.x and obj.y == player.y and obj.name != player.name]
     if names:
         names = ', '.join(names)  # join the names, seperated by commas
         names = 'Under player: ' + names
@@ -841,6 +841,46 @@ def get_names_under_player():
         names = ''
     return names.capitalize()
 
+
+def get_text_entry():
+    timer = 0
+    command = ""
+    cursor = 0
+
+    while not libtcod.console_is_window_closed():
+
+        key = libtcod.console_check_for_keypress(libtcod.KEY_PRESSED)
+
+        timer += 1
+        if timer % (LIMIT_FPS // 4) == 0:
+            if timer % (LIMIT_FPS // 2) == 0:
+                timer = 0
+                libtcod.console_set_char(0, cursor,  0, "_")
+                libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)
+            else:
+                libtcod.console_set_char(0, cursor,  0, " ")
+                libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)
+
+        if key.vk == libtcod.KEY_BACKSPACE and cursor > 0:
+            libtcod.console_set_char(0, cursor,  0, " ")
+            libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)
+            command = command[:-1]
+            cursor -= 1
+        elif key.vk == libtcod.KEY_ENTER:
+            break
+        elif key.vk == libtcod.KEY_ESCAPE:
+            command = ""
+            break
+        elif key.c > 0:
+            letter = chr(key.c)
+            libtcod.console_set_char(0, cursor, 0, letter)  #print new character at appropriate position on screen
+            libtcod.console_set_char_foreground(0, cursor, 0, libtcod.white)  #make it white or something
+            command += letter  #add to the string
+            cursor += 1
+
+        libtcod.console_flush()
+
+    return command
 
 def player_move_or_attack(dx, dy):
     global fov_recompute
