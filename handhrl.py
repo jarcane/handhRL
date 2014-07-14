@@ -26,6 +26,9 @@ import shelve
 import time
 import os
 import operator
+import random
+import hhtable
+
 
 
 SCREEN_WIDTH = 80
@@ -1028,27 +1031,13 @@ def place_objects(room):
     # maximum number of monsters per room
     max_monsters = from_dungeon_level([[2, 1], [3, 4], [4, 6], [5, 8]])
 
-    # chances of each monster
-    # First value in each tuple is weighted value relative to all other items available at that level
-    # Second value is the dungeon_level at which they become available
-    # As H&H monster tables are flat, we simply use 1 here
-    monster_chances = {'felix': 1,
-                       'lobsterman': 1,
-                       'nagahide': from_dungeon_level([[1, 3]]),
-                       'hiverbug': from_dungeon_level([[1, 5]]),
-                       'paleworm': from_dungeon_level([[1, 7]]),
-                       'blind_troll': from_dungeon_level([[1, 9]]),
-                       'living_weapon': from_dungeon_level([[1, 11]]),
-                       'megaworm': from_dungeon_level([[1, 13]])}
+    # monster table
+    # key = name
+    # dict entries:
+    # key[0]: dungeon level appearing
+    # key[1]: list[name, hitdice tuple, color]
 
-    monster_table = {'felix': ['felix', (1, 4), libtcod.light_azure],
-                     'lobsterman': ['lobsterman', (1, 6), libtcod.red],
-                     'nagahide': ['nagahide', (2, 12), libtcod.dark_green],
-                     'hiverbug': ['hiverbug', (3, 8), libtcod.yellow],
-                     'paleworm': ['paleworm', (5, 6), libtcod.dark_pink],
-                     'blind_troll': ['blind_troll', (5, 10), libtcod.darkest_green],
-                     'living_weapon': ['living weapon', (6, 12), libtcod.black],
-                     'megaworm': ['megaworm', (8, 10), libtcod.silver]}
+    monster_table = hhtable.make_monster_table(dungeon_level)
 
     # max number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
@@ -1076,8 +1065,15 @@ def place_objects(room):
         # only place it if the tile is not blocked
 
         if not is_blocked(x, y):
-            choice = random_choice(monster_chances)
-            monster = get_monster_from_hitdice(x, y, *monster_table[choice])
+            valid=False
+
+            # pick a monster, then check if it's valid for this dungeon level
+            while not valid:
+                choice = random.choice(monster_table.keys())
+                if monster_table[choice][0] <= dungeon_level:
+                    valid = True
+
+            monster = get_monster_from_hitdice(x, y, *monster_table[choice][1])
             objects.append(monster)
 
     # choose a random number of items
