@@ -50,4 +50,10 @@ opts = { 'py2exe': {
 setup(console=[target_file],
       data_files=my_files,
       zipfile=None,
-      options=opts)
+      options=opts,
+      windows= [
+          {
+              "script": "handhrl.py",
+              "icon_resources": [(1,"handhicon.ico")]
+          }
+      ])
