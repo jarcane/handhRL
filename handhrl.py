@@ -1052,19 +1052,11 @@ def get_item(x, y):
     return item
 
 def get_weapon(x, y):
-    choice = 'laser_sword'
+    weapon = hhtable.make_weapon()
 
-    if choice == 'laser_sword':
-        # create a sword
-        # determine sword bonus, if any.
-        sword_bonus = rolldice(1, 3) - 1
-        if sword_bonus > 0:
-            sword_name = '+' + str(sword_bonus) + ' laser sword'
-        else:
-            sword_name = 'laser sword'
-        equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1], to_hit_bonus=sword_bonus,
-                                        damage_bonus=sword_bonus)
-        item = Object(x, y, '/', sword_name, libtcod.sky, equipment=equipment_component)
+    equipment_component = Equipment(slot='right hand', damage_roll=weapon['damage'], to_hit_bonus=weapon['bonus'],
+                                    damage_bonus=weapon['bonus'])
+    item = Object(x, y, weapon['char'], weapon['name'], libtcod.brass, equipment=equipment_component)
 
     return item
 
