@@ -6,3 +6,4 @@ scorefile
 .idea/*
 build/*
 dist/*
+*.pyc
