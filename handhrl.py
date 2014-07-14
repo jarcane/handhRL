@@ -617,7 +617,7 @@ def new_game(firstrun=False):
 
     # create Player object
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
-    fighter_component = Fighter(hp=rolldice(3, 6) + rolldice(1, 10) + 100, armor_class=10, to_hit=1, damage=1,
+    fighter_component = Fighter(hp=rolldice(3, 6) + rolldice(1, 10), armor_class=10, to_hit=1, damage=1,
                                 damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
     player = Object(0, 0, chr(1), get_text_entry('What is your name, Ensign?', generate_screen()),
@@ -1105,7 +1105,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
         roll = (num / 2, sides)
 
     fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10 - num, to_hit=to_hit,
-                                damage=0, damage_roll=roll, xp=num * sides * 5, death_function=monster_death)
+                                damage=0, damage_roll=roll, xp=num * sides * 10, death_function=monster_death)
     ai_component = BasicMonster()
     monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
 
