@@ -485,7 +485,7 @@ def help_screen():
     show_text_log(help_text, generate_screen(), delay=False, center_first_line=True)
 
 
-def main_menu():
+def main_menu(firstrun=False):
     # The main game menu.
 
     img = generate_starpic()
@@ -511,7 +511,8 @@ def main_menu():
         choice = menu('', [newopt, 'Continue last save', 'Display high scores', 'Quit'], 26)
 
         if choice == 0:
-            new_game()
+            new_game(firstrun)
+            firstrun=False
             play_game()
 
         if choice == 1:
@@ -531,13 +532,13 @@ def main_menu():
             break
 
 
-def new_game():
-    global player, inventory, game_msgs, game_state, firstrun, dungeon_level
+def new_game(firstrun=False):
+    global player, inventory, game_msgs, game_state, dungeon_level
 
     # play intro sequence if starting up
     if firstrun:
         intro_sequence()
-        firstrun = False
+
 
     # create Player object
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
@@ -1589,6 +1590,4 @@ libtcod.sys_set_fps(LIMIT_FPS)
 panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)
 con = libtcod.console_new(MAP_WIDTH, MAP_HEIGHT)
 
-firstrun = True
-
-main_menu()
+main_menu(firstrun=True)
