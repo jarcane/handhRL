@@ -323,8 +323,14 @@ class Fighter:
     def attack(self, target):
         # first check for successful attack
         to_hit_target = self.to_hit + target.fighter.armor_class + 5
+
+        if target.ai is not None:
+            pronoun = 'the '
+        else:
+            pronoun = ''
+
         if rolldice(1, 20) >= to_hit_target:
-            message(self.owner.name.title() + ' misses the ' + target.name + '.')
+            message(self.owner.name.title() + ' misses ' + pronoun + target.name + '.')
             return
 
         # now roll for damage (curr. using OD&D style)
@@ -332,11 +338,11 @@ class Fighter:
 
         if damage > 0:
             # make the target take some damage
-            message(self.owner.name.title() + ' hits the ' + target.name + ' for ' + str(damage) + ' hit points.',
+            message(self.owner.name.title() + ' hits ' + pronoun + target.name + ' for ' + str(damage) + ' hit points.',
                     libtcod.yellow)
             target.fighter.take_damage(damage, self.owner.name)
         else:
-            message(self.owner.name.title() + ' hits the ' + target.name + ' but it has no effect!',
+            message(self.owner.name.title() + ' hits ' + pronoun + target.name + ' but it has no effect!',
                     libtcod.grey)
 
 
@@ -1005,8 +1011,14 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
     else:
         letter = name[0]
 
+    # get number of damage dice from hitdice, making sure it's at least 1.
+    if num / 2 < 1:
+        roll = (1, sides)
+    else:
+        roll = (num / 2, sides)
+
     fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10-num, to_hit=to_hit,
-                                damage=0, damage_roll=[num/2, sides], xp=num*sides, death_function=monster_death)
+                                damage=0, damage_roll=roll, xp=num*sides, death_function=monster_death)
     ai_component = BasicMonster()
     monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
 
