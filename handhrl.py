@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
+
 import libtcodpy as libtcod
 import math
 import textwrap
@@ -984,6 +985,33 @@ def from_player_level(table):
     return 0
 
 
+def get_monster_from_hitdice(x, y, name, hitdice, color):
+    # generate monster object from number of hit dice
+    # get tuple components
+    num = hitdice[0]
+    sides = hitdice[1]
+
+    # determine to-hit from num and sides
+    if sides == 12:
+        to_hit = num
+    elif 11 >= sides >= 8:
+        to_hit = num / 2
+    else:
+        to_hit = num / 3
+
+    # if sides >= 10, make letter a capital
+    if sides >= 10:
+        letter = name[0].capitalize()
+    else:
+        letter = name[0]
+
+    fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10-num, to_hit=to_hit,
+                                damage=0, damage_roll=[num/2, sides], xp=num*sides, death_function=monster_death)
+    ai_component = BasicMonster()
+    monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
+
+    return monster
+
 def place_objects(room):
     # maximum number of monsters per room
     max_monsters = from_dungeon_level([[2, 1], [3, 4], [4, 6], [5, 8]])
@@ -997,9 +1025,18 @@ def place_objects(room):
                        'nagahide': from_dungeon_level([[1, 3]]),
                        'hiverbug': from_dungeon_level([[1, 5]]),
                        'paleworm': from_dungeon_level([[1, 7]]),
-                       'centipod': from_dungeon_level([[1, 9]]),
+                       'blind_troll': from_dungeon_level([[1, 9]]),
                        'living_weapon': from_dungeon_level([[1, 11]]),
                        'megaworm': from_dungeon_level([[1, 13]])}
+
+    monster_table = {'felix': ['felix', (1, 4), libtcod.light_azure],
+                     'lobsterman': ['lobsterman', (1, 6), libtcod.red],
+                     'nagahide': ['nagahide', (2, 12), libtcod.dark_green],
+                     'hiverbug': ['hiverbug', (3, 8), libtcod.yellow],
+                     'paleworm': ['paleworm', (5, 6), libtcod.dark_pink],
+                     'blind_troll': ['blind_troll', (5, 10), libtcod.darkest_green],
+                     'living_weapon': ['living weapon', (6, 12), libtcod.black],
+                     'megaworm': ['megaworm', (8, 10), libtcod.silver]}
 
     # max number of items per room
     max_items = from_dungeon_level([[1, 1], [2, 4]])
@@ -1028,56 +1065,7 @@ def place_objects(room):
 
         if not is_blocked(x, y):
             choice = random_choice(monster_chances)
-            if choice == 'felix':
-                # create a felix
-                fighter_component = Fighter(hp=rolldice(1, 4), armor_class=8, to_hit=0, damage=0, damage_roll=[1, 4],
-                                            xp=35, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'f', 'felix', libtcod.light_azure, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'lobsterman':
-                fighter_component = Fighter(hp=rolldice(1, 6), armor_class=8, to_hit=0, damage=0, damage_roll=[1, 6],
-                                            xp=50, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'l', 'lobsterman', libtcod.red, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'nagahide':
-                # create a nagahide
-                fighter_component = Fighter(hp=rolldice(2, 12), armor_class=7, to_hit=2, damage=0, damage_roll=[1, 12],
-                                            xp=75, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'N', 'nagahide', libtcod.dark_green, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'hiverbug':
-                fighter_component = Fighter(hp=rolldice(3, 8), armor_class=7, to_hit=1, damage=0, damage_roll=[1, 8],
-                                            xp=100, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'h', 'hiverbug', libtcod.yellow, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'paleworm':
-                fighter_component = Fighter(hp=rolldice(5, 6), armor_class=6, to_hit=2, damage=0, damage_roll=[2, 6],
-                                            xp=125, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'P', 'paleworm', libtcod.pink, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'centipod':
-                fighter_component = Fighter(hp=rolldice(5, 6), armor_class=4, to_hit=1, damage=0, damage_roll=[2, 6],
-                                            xp=150, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'c', 'centipod', libtcod.black, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'living_weapon':
-                fighter_component = Fighter(hp=rolldice(6, 12), armor_class=2, to_hit=6, damage=0, damage_roll=[3, 12],
-                                            xp=200, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'L', 'living weapon', libtcod.dark_gray, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
-            elif choice == 'megaworm':
-                fighter_component = Fighter(hp=rolldice(8, 10), armor_class=2, to_hit=4, damage=0, damage_roll=[4, 10],
-                                            xp=300, death_function=monster_death)
-                ai_component = BasicMonster()
-                monster = Object(x, y, 'M', 'megaworm', libtcod.silver, blocks=True, fighter=fighter_component,
-                                 ai=ai_component)
+            monster = get_monster_from_hitdice(x, y, *monster_table[choice])
             objects.append(monster)
 
     # choose a random number of items
