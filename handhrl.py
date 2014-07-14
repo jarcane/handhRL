@@ -1027,6 +1027,75 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
     return monster
 
+
+def get_item(x, y):
+
+    choice = libtcod.random_get_int(0, 1, 4)
+
+    if choice == 1:
+        # create a healing item
+        item_component = Item(use_function=cast_heal)
+        item = Object(x, y, '!', 'dose of Opacaine', libtcod.violet, item=item_component)
+    elif choice == 2:
+        # create an arc lightning device
+        item_component = Item(use_function=cast_lightning)
+        item = Object(x, y, '#', 'Tesla arc device', libtcod.light_yellow, item=item_component)
+    elif choice == 3:
+        # create a grenade
+        item_component = Item(use_function=cast_fireball)
+        item = Object(x, y, '#', 'incendiary grenade', libtcod.light_yellow, item=item_component)
+    elif choice == 4:
+        # create a confuse item
+        item_component = Item(use_function=cast_confuse)
+        item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
+
+    return item
+
+def get_weapon(x, y):
+    choice = 'laser_sword'
+
+    if choice == 'laser_sword':
+        # create a sword
+        # determine sword bonus, if any.
+        sword_bonus = rolldice(1, 3) - 1
+        if sword_bonus > 0:
+            sword_name = '+' + str(sword_bonus) + ' laser sword'
+        else:
+            sword_name = 'laser sword'
+        equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1], to_hit_bonus=sword_bonus,
+                                        damage_bonus=sword_bonus)
+        item = Object(x, y, '/', sword_name, libtcod.sky, equipment=equipment_component)
+
+    return item
+
+def get_armor(x, y):
+    choice = libtcod.random_get_int(0, 1, 2)
+
+    if choice == 1:
+        # create a shield
+        shield_bonus = rolldice(1, 3) - 3
+        if shield_bonus < 0:
+            shield_name = str(shield_bonus) + ' plexsteel shield'
+        else:
+            shield_name = 'plexsteel shield'
+        equipment_component = Equipment(slot='left hand', armor_bonus=-1+shield_bonus)
+        item = Object(x, y, '[', shield_name, libtcod.darker_orange, equipment=equipment_component)
+    elif choice == 2:
+        # create vacc suit armor
+        armor_bonus = rolldice(1, 3) - 3
+        if armor_bonus < 0:
+            armor_name = str(armor_bonus) + ' vacc suit'
+        else:
+            armor_name = 'vacc suit'
+        equipment_component = Equipment(slot='armor', armor_bonus=-2+armor_bonus)
+        item = Object(x, y, ']', armor_name, libtcod.silver, equipment=equipment_component)
+
+    return item
+
+def get_placeable(x, y):
+    return Object(x, y, chr(127), 'terminal', libtcod.silver)
+
+
 def place_objects(room):
     # maximum number of monsters per room
     max_monsters = from_dungeon_level([[2, 1], [3, 4], [4, 6], [5, 8]])
@@ -1046,13 +1115,10 @@ def place_objects(room):
     # functions the same as the monster chances (weighted values, availability by level)
     # future revisions should break this down by type instead of individual item, resolving specific items in the
     # sub entries below.
-    item_chances = {'opacaine': 1,
-                    'vacc_suit': 1,
-                    'tesla': 1,
-                    'grenade': 1,
-                    'confuse': 1,
-                    'laser_sword': 1,
-                    'plexsteel_shield': 1}
+    item_chances = ['item',
+                    'armor',
+                    'weapon',
+                    'placeable']
 
     # choose random number of monsters
     num_monsters = libtcod.random_get_int(0, 0, max_monsters)
@@ -1080,52 +1146,16 @@ def place_objects(room):
 
         # only place it if the tile is not blocked
         if not is_blocked(x, y):
-            choice = random_choice(item_chances)
-            if choice == 'opacaine':
-                # create a healing item
-                item_component = Item(use_function=cast_heal)
-                item = Object(x, y, '!', 'dose of Opacaine', libtcod.violet, item=item_component)
-            elif choice == 'tesla':
-                # create an arc lightning device
-                item_component = Item(use_function=cast_lightning)
-                item = Object(x, y, '#', 'Tesla arc device', libtcod.light_yellow, item=item_component)
-            elif choice == 'grenade':
-                # create a grenade
-                item_component = Item(use_function=cast_fireball)
-                item = Object(x, y, '#', 'incendiary grenade', libtcod.light_yellow, item=item_component)
-            elif choice == 'confuse':
-                # create a confuse item
-                item_component = Item(use_function=cast_confuse)
-                item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
-            elif choice == 'laser_sword':
-                # create a sword
-                # determine sword bonus, if any.
-                sword_bonus = rolldice(1, 3) - 1
-                if sword_bonus > 0:
-                    sword_name = '+' + str(sword_bonus) + ' laser sword'
-                else:
-                    sword_name = 'laser sword'
-                equipment_component = Equipment(slot='right hand', damage_roll=[2, 10, 1], to_hit_bonus=sword_bonus,
-                                                damage_bonus=sword_bonus)
-                item = Object(x, y, '/', sword_name, libtcod.sky, equipment=equipment_component)
-            elif choice == 'plexsteel_shield':
-                # create a shield
-                shield_bonus = rolldice(1, 3) - 3
-                if shield_bonus < 0:
-                    shield_name = str(shield_bonus) + ' plexsteel shield'
-                else:
-                    shield_name = 'plexsteel shield'
-                equipment_component = Equipment(slot='left hand', armor_bonus=-1+shield_bonus)
-                item = Object(x, y, '[', shield_name, libtcod.darker_orange, equipment=equipment_component)
-            elif choice == 'vacc_suit':
-                # create vacc suit armor
-                armor_bonus = rolldice(1, 3) - 3
-                if armor_bonus < 0:
-                    armor_name = str(armor_bonus) + ' vacc suit'
-                else:
-                    armor_name = 'vacc suit'
-                equipment_component = Equipment(slot='armor', armor_bonus=-2+armor_bonus)
-                item = Object(x, y, ']', armor_name, libtcod.silver, equipment=equipment_component)
+            choice = random.choice(item_chances)
+            if choice == 'item':
+                item = get_item(x, y)
+            elif choice == 'armor':
+                item = get_armor(x, y)
+            elif choice == 'weapon':
+                item = get_weapon(x, y)
+            elif choice == 'placeable':
+                item = get_placeable(x, y)
+
             objects.append(item)
             item.send_to_back()  # items appear below other objects
 
