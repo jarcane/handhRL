@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-
 import libtcodpy as libtcod
 import math
 import textwrap
@@ -28,7 +27,6 @@ import os
 import operator
 import random
 import hhtable
-
 
 
 SCREEN_WIDTH = 80
@@ -58,7 +56,6 @@ FIREBALL_DAMAGE = [1, 6]
 FIREBALL_RADIUS = 3
 LEVEL_UP_BASE = 300
 LEVEL_UP_FACTOR = 200
-
 
 color_dark_wall = libtcod.Color(128, 128, 128)
 color_light_wall = libtcod.Color(130, 110, 50)
@@ -230,7 +227,8 @@ class Item:
 
 class Equipment:
     # an object that can be equipped, yielding bonuses. automatically adds the item component.
-    def __init__(self, slot, to_hit_bonus=0, damage_bonus=0, damage_roll=None, armor_bonus=0, max_hp_bonus=0):
+    def __init__(self, slot, to_hit_bonus=0, damage_bonus=0, damage_roll=None, armor_bonus=0, max_hp_bonus=0,
+                 ranged=False, ammo=None):
         self.to_hit_bonus = to_hit_bonus
         self.damage_bonus = damage_bonus
         self.damage_roll = damage_roll
@@ -238,6 +236,8 @@ class Equipment:
         self.max_hp_bonus = max_hp_bonus
         self.slot = slot
         self.is_equipped = False
+        self.ranged = ranged
+        self.ammo = ammo
 
     def toggle_equip(self):  # toggle equip/dequip state
         if self.is_equipped:
@@ -286,12 +286,12 @@ class Fighter:
         return self.base_armor_class + bonus
 
     @property
-    def damage(self): # return actual damage bonus, plus any special bonuses
+    def damage(self):  # return actual damage bonus, plus any special bonuses
         bonus = sum(equipment.damage_bonus for equipment in get_all_equipped(self.owner))
         return self.base_damage + bonus
 
     @property
-    def damage_roll(self): # return current damage roll or roll from equipment
+    def damage_roll(self):  # return current damage roll or roll from equipment
         for equipment in get_all_equipped(self.owner):
             if equipment.damage_roll:
                 return equipment.damage_roll
@@ -324,14 +324,31 @@ class Fighter:
             self.hp = self.max_hp
 
     def attack(self, target):
-        # first check for successful attack
+        # first check for to hit target
         to_hit_target = self.to_hit + target.fighter.armor_class + 5
 
+        # check of the target is attacking with a gun
+        has_gun = False
+        for i in get_all_equipped(self.owner):
+            if i.is_equipped and i.ranged:
+                has_gun = True
+                gun = i
+
+        # check if gun has ammo
+        if has_gun:
+            if gun.ammo > 0:
+                gun.ammo -= 1
+            else:
+                message("You don't have any ammo!")
+                return
+
+        # use the right pronoun
         if target.ai is not None:
             pronoun = 'the '
         else:
             pronoun = ''
 
+        # roll to hit
         if rolldice(1, 20) >= to_hit_target:
             message(self.owner.name.title() + ' misses ' + pronoun + target.name + '.')
             return
@@ -346,6 +363,52 @@ class Fighter:
             target.fighter.take_damage(damage, self.owner.name)
         else:
             message(self.owner.name.title() + ' hits ' + pronoun + target.name + ' but it has no effect!',
+                    libtcod.grey)
+
+    def shoot(self):
+        # first check if the character is equipped with a ranged weapon
+        has_gun = False
+        for i in get_all_equipped(self.owner):
+            if i.is_equipped and i.ranged:
+                has_gun = True
+                gun = i
+
+        if not has_gun:
+            message("You're not carrying a gun!", libtcod.red)
+            return
+
+        # check if the gun has ammo
+        if gun.ammo is None or gun.ammo < 1:
+            message("You're out of ammo in that gun!", libtcod.red)
+            return
+
+        # target a monster
+        message('Left-click on a target monster, or right-click to cancel.')
+        target = target_monster()
+        if not target:
+            return
+
+        # calculate to-hit
+        to_hit_target = self.to_hit + target.fighter.armor_class + 5
+
+        # deduct ammo
+        gun.ammo -= 1
+
+        # roll to hit
+        if rolldice(1, 20) >= to_hit_target:
+            message(self.owner.name.title() + ' misses the ' + target.name + '.')
+            return
+
+        # now roll for damage (curr. using OD&D style)
+        damage = rolldice(*self.damage_roll) + gun.damage_bonus
+
+        if damage > 0:
+            # make the target take some damage
+            message(self.owner.name.title() + ' hits the ' + target.name + ' for ' + str(damage) + ' hit points.',
+                    libtcod.yellow)
+            target.fighter.take_damage(damage, self.owner.name)
+        else:
+            message(self.owner.name.title() + ' hits the ' + target.name + ' but it has no effect!',
                     libtcod.grey)
 
 
@@ -447,7 +510,7 @@ def show_text_log(text, img=None, delay=True, center_first_line=False):
                     delay = False
 
     libtcod.console_set_default_foreground(0, libtcod.white)
-    libtcod.console_print_ex(0, SCREEN_WIDTH/2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
+    libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
                              'Press any key to continue')
     libtcod.console_flush()
     libtcod.console_wait_for_keypress(True)
@@ -482,15 +545,17 @@ def help_screen():
         '',
         'ESC - Exit to menu, saving game',
         'Alt+Enter - toggle fullscreen',
-        'NumPad or Arrows - move character',
+        'NumPad or Arrows - move character or attack adjacent',
         '5 or Space - wait one turn',
         'h or ? - display this help screen',
+        's - shoot with ranged weapon if equipped',
+        'a - check ammo of equipped ranged weapon',
         'g - get item beneath character',
         'i - inventory/use item',
         'd - drop item',
         'c - character status',
         '< - descend stairs'
-        ]
+    ]
 
     show_text_log(help_text, generate_screen(), delay=False, center_first_line=True)
 
@@ -522,7 +587,7 @@ def main_menu(firstrun=False):
 
         if choice == 0:
             new_game(firstrun)
-            firstrun=False
+            firstrun = False
             play_game()
 
         if choice == 1:
@@ -536,7 +601,7 @@ def main_menu(firstrun=False):
             try:
                 show_scores()
             except:
-                msgbox('\n No high scores yet!\n',24)
+                msgbox('\n No high scores yet!\n', 24)
                 continue
         elif choice == 3:
             break
@@ -552,7 +617,8 @@ def new_game(firstrun=False):
 
     # create Player object
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
-    fighter_component = Fighter(hp=rolldice(3,6)+rolldice(1,10), armor_class=10, to_hit=1, damage=1, damage_roll=[1, 3],
+    fighter_component = Fighter(hp=rolldice(3, 6) + rolldice(1, 10) + 100, armor_class=10, to_hit=1, damage=1,
+                                damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
     player = Object(0, 0, chr(1), get_text_entry('What is your name, Ensign?', generate_screen()),
                     libtcod.white, blocks=True, fighter=fighter_component)
@@ -675,14 +741,14 @@ def new_score(player):
         scores['scores'] = new_list
     scores.close()
 
-    choice = menu('Game Over\n', ['See your score','Return to main menu'], 22)
+    choice = menu('Game Over\n', ['See your score', 'Return to main menu'], 22)
     if choice == 0:
         show_scores()
 
 
 def show_scores():
     # load the score file, sort the list by score, then display
-    score_file = shelve.open('scorefile','r')
+    score_file = shelve.open('scorefile', 'r')
     scores = score_file['scores']
     scores.sort(key=operator.itemgetter(0), reverse=True)
     score_list = ['High Scores']
@@ -698,6 +764,7 @@ def show_scores():
     score_file.close()
 
     show_text_log(score_list, generate_starpic(), delay=False, center_first_line=True)
+
 
 def end_game():
     ending = [
@@ -749,6 +816,21 @@ def handle_keys(key, mouse):
             # test for other keys
             key_char = chr(key.c)
 
+            if key_char == 'a':
+                has_gun = False
+                for i in get_all_equipped(player):
+                    if i.is_equipped and i.ranged:
+                        has_gun = True
+                        gun = i
+                if has_gun:
+                    message(gun.owner.name.capitalize() + ' has ' + str(gun.ammo) + ' shots remaining.')
+            if key_char == 's':
+                # shoot at someone
+                player.fighter.shoot()
+                # remove the target from the map until the next redraw
+                for object in objects:
+                    object.clear()
+                return
             if key_char == 'g':
                 # pick up an item
                 for object in objects:
@@ -777,17 +859,18 @@ def handle_keys(key, mouse):
                 except:
                     highest = ''
                 show_text_log([
-                    'Character Information',
-                    'Name: ' + player.name,
-                    'Level: ' + str(player.level),
-                    'Experience: ' + str(player.fighter.xp),
-                    'Experience to level up: ' + str(level_up_xp),
-                    'Maximum HP: ' + str(player.fighter.max_hp),
-                    'To-hit: +' + str(player.fighter.to_hit),
-                    'Damage: ' + str(player.fighter.damage_roll[0]) + 'd' + str(player.fighter.damage_roll[1]) + highest,
-                    'Damage Bonus: +' + str(player.fighter.damage),
-                    'AC: ' + str(player.fighter.armor_class),
-                    ], generate_screen(), delay=False)
+                                  'Character Information',
+                                  'Name: ' + player.name,
+                                  'Level: ' + str(player.level),
+                                  'Experience: ' + str(player.fighter.xp),
+                                  'Experience to level up: ' + str(level_up_xp),
+                                  'Maximum HP: ' + str(player.fighter.max_hp),
+                                  'AC: ' + str(player.fighter.armor_class),
+                                  'To-hit: +' + str(player.fighter.to_hit),
+                                  'Damage Bonus: +' + str(player.fighter.damage),
+                                  'Damage Roll: ' + str(player.fighter.damage_roll[0]) + 'd' + str(
+                                      player.fighter.damage_roll[1]) + highest,
+                              ], generate_screen(), delay=False)
             if key_char == 'h' or key_char == '?':
                 help_screen()
             return 'didnt-take-turn'
@@ -799,7 +882,7 @@ def target_tile(max_range=None):
     key = libtcod.Key()
     mouse = libtcod.Mouse()
     while True:
-        # render the screen. this reases the inventory and shows the names of objects under the mouse
+        # render the screen. this raises the inventory and shows the names of objects under the mouse
         libtcod.console_flush()
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
         render_all()
@@ -875,15 +958,15 @@ def get_text_entry(header, img):
         if timer % (LIMIT_FPS // 4) == 0:
             if timer % (LIMIT_FPS // 2) == 0:
                 timer = 0
-                libtcod.console_set_char(0, cursor + x,  y, "_")
-                libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)
+                libtcod.console_set_char(0, cursor + x, y, "_")
+                libtcod.console_set_char_foreground(0, cursor + x, y, libtcod.white)
             else:
-                libtcod.console_set_char(0, cursor + x,  y, " ")
-                libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)
+                libtcod.console_set_char(0, cursor + x, y, " ")
+                libtcod.console_set_char_foreground(0, cursor + x, y, libtcod.white)
 
         if key.vk == libtcod.KEY_BACKSPACE and cursor > 0:
-            libtcod.console_set_char(0, cursor + x,  y, " ")
-            libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)
+            libtcod.console_set_char(0, cursor + x, y, " ")
+            libtcod.console_set_char_foreground(0, cursor + x, y, libtcod.white)
             command = command[:-1]
             cursor -= 1
         elif key.vk == libtcod.KEY_ENTER:
@@ -893,14 +976,15 @@ def get_text_entry(header, img):
             break
         elif key.c > 0:
             letter = chr(key.c)
-            libtcod.console_set_char(0, cursor + x,  y, letter)  #print new character at appropriate position on screen
-            libtcod.console_set_char_foreground(0, cursor + x,  y, libtcod.white)  #make it white or something
-            command += letter  #add to the string
+            libtcod.console_set_char(0, cursor + x, y, letter)  # print new character at appropriate position on screen
+            libtcod.console_set_char_foreground(0, cursor + x, y, libtcod.white)  # make it white or something
+            command += letter  # add to the string
             cursor += 1
 
         libtcod.console_flush()
 
     return command
+
 
 def player_move_or_attack(dx, dy):
     global fov_recompute
@@ -1020,8 +1104,8 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
     else:
         roll = (num / 2, sides)
 
-    fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10-num, to_hit=to_hit,
-                                damage=0, damage_roll=roll, xp=num*sides, death_function=monster_death)
+    fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10 - num, to_hit=to_hit,
+                                damage=0, damage_roll=roll, xp=num * sides * 5, death_function=monster_death)
     ai_component = BasicMonster()
     monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
 
@@ -1029,7 +1113,6 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
 
 def get_item(x, y):
-
     choice = libtcod.random_get_int(0, 1, 4)
 
     if choice == 1:
@@ -1051,14 +1134,16 @@ def get_item(x, y):
 
     return item
 
+
 def get_weapon(x, y):
     weapon = hhtable.make_weapon()
 
     equipment_component = Equipment(slot='right hand', damage_roll=weapon['damage'], to_hit_bonus=weapon['bonus'],
-                                    damage_bonus=weapon['bonus'])
+                                    damage_bonus=weapon['bonus'], ranged=weapon['gun'], ammo=weapon['ammo'])
     item = Object(x, y, weapon['char'], weapon['name'], libtcod.brass, equipment=equipment_component)
 
     return item
+
 
 def get_armor(x, y):
     choice = libtcod.random_get_int(0, 1, 2)
@@ -1070,7 +1155,7 @@ def get_armor(x, y):
             shield_name = str(shield_bonus) + ' plexsteel shield'
         else:
             shield_name = 'plexsteel shield'
-        equipment_component = Equipment(slot='left hand', armor_bonus=-1+shield_bonus)
+        equipment_component = Equipment(slot='left hand', armor_bonus=-1 + shield_bonus)
         item = Object(x, y, '[', shield_name, libtcod.darker_orange, equipment=equipment_component)
     elif choice == 2:
         # create vacc suit armor
@@ -1079,10 +1164,11 @@ def get_armor(x, y):
             armor_name = str(armor_bonus) + ' vacc suit'
         else:
             armor_name = 'vacc suit'
-        equipment_component = Equipment(slot='armor', armor_bonus=-2+armor_bonus)
+        equipment_component = Equipment(slot='armor', armor_bonus=-2 + armor_bonus)
         item = Object(x, y, ']', armor_name, libtcod.silver, equipment=equipment_component)
 
     return item
+
 
 def get_placeable(x, y):
     return Object(x, y, chr(127), 'terminal', libtcod.silver)
@@ -1150,6 +1236,7 @@ def place_objects(room):
 
             objects.append(item)
             item.send_to_back()  # items appear below other objects
+
 
 def make_map():
     global map, objects, stairs
@@ -1388,7 +1475,7 @@ def render_all():
     libtcod.console_print_ex(panel, 1, 0, libtcod.BKGND_NONE, libtcod.LEFT, get_names_under_mouse())
 
     # display names of objects under player on right side of panel
-    libtcod.console_print_ex(panel, SCREEN_WIDTH-2, 0, libtcod.BKGND_NONE, libtcod.RIGHT, get_names_under_player())
+    libtcod.console_print_ex(panel, SCREEN_WIDTH - 2, 0, libtcod.BKGND_NONE, libtcod.RIGHT, get_names_under_player())
 
     # blit the contents of "panel" to root console
     libtcod.console_blit(panel, 0, 0, SCREEN_WIDTH, PANEL_HEIGHT, 0, 0, PANEL_Y)
@@ -1528,7 +1615,7 @@ def check_level_up():
                 libtcod.yellow)
         render_all()  # re-render console so that message plays before menu
 
-        #check player level, roll 1d10 for new HP if 6 or less, or just +3 (see H&H rulebook)
+        # check player level, roll 1d10 for new HP if 6 or less, or just +3 (see H&H rulebook)
         if player.level <= 6:
             hit_die = rolldice(1, 10)
         else:
@@ -1596,7 +1683,8 @@ def cast_fireball():
 # ############################################
 # Initialization & Main Loop
 # ############################################
-libtcod.console_set_custom_font('terminal16x16_gs_ro.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
+libtcod.console_set_custom_font('terminal16x16_gs_ro.png',
+                                libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Hulks and Horrors', False)
 libtcod.sys_set_fps(LIMIT_FPS)
 panel = libtcod.console_new(SCREEN_WIDTH, PANEL_HEIGHT)

@@ -9,6 +9,28 @@ import libtcodpy as libtcod
 import random
 
 
+def rolldice(num, sides, highest=0):
+    # rolls a given number of dice and returns their total
+    # args: num = number of dice, sides = number of sides on each die,
+    # highest (optional) = if != 0, returns only the sum of the highest number of dice given
+    # Ex. (using H&H notation): 4d6 = rolldice(4,6); 3d6H2 = rolldice(3,6,highest=2)
+
+    roll = []
+    total = 0
+    if highest != 0:
+        for x in range(num):
+            roll.append(libtcod.random_get_int(0, 1, sides))
+        roll.sort(reverse=True)
+        for x in range(highest):
+            total += roll[x]
+        return total
+    else:
+        for x in range(num):
+            roll.append(libtcod.random_get_int(0, 1, sides))
+        total = sum(roll)
+        return total
+
+
 def make_monster_table(dungeon_level):
     # generate the dict table for the monster generation
 
@@ -111,7 +133,7 @@ def make_weapon():
         if type == 'heavy' or type == 'shotgun':
             name = random.choice(ancient_names[type])
         else:
-            name = random.choice(ancient_names[type]) + type
+            name = random.choice(ancient_names[type]) + ' ' + type
 
         # get the weapon's damage
         damage = random.choice(ancient_damage[type])
@@ -123,10 +145,27 @@ def make_weapon():
     if bonus > 0:
         name = name + ' +' + str(bonus)
 
+    # determine if it's a gun
+    if char in [')', '}', '=', '&']:
+        gun = True
+    else:
+        gun = False
+
+    # give it ammo if it is
+    if gun:
+        if char in [')', '}', '=']:
+            ammo = rolldice(3, 10)
+        else:
+            ammo = rolldice(1, 10)
+    else:
+        ammo = None
+
     # put it together
     weapon = {'char': char,
               'name': name,
               'damage': damage,
-              'bonus': bonus}
+              'bonus': bonus,
+              'gun': gun,
+              'ammo': ammo}
 
     return weapon
