@@ -39,4 +39,6 @@ def make_monster_table(dungeon_level):
                      'living_weapon': [11, ['living weapon', (6, 12), libtcod.black]],
                      'megaworm': [13, ['megaworm', (8, 10), libtcod.silver]]}
 
-    return monster_table
+    adjust_table = {k: v for k, v in monster_table.iteritems() if v[0] <= dungeon_level}
+
+    return adjust_table

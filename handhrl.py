@@ -1065,14 +1065,8 @@ def place_objects(room):
         # only place it if the tile is not blocked
 
         if not is_blocked(x, y):
-            valid=False
-
             # pick a monster, then check if it's valid for this dungeon level
-            while not valid:
-                choice = random.choice(monster_table.keys())
-                if monster_table[choice][0] <= dungeon_level:
-                    valid = True
-
+            choice = random.choice(monster_table.keys())
             monster = get_monster_from_hitdice(x, y, *monster_table[choice][1])
             objects.append(monster)
 
