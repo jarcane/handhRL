@@ -1,9 +1,9 @@
-'''
+"""
 handhRL - table functions
 
 This file contains the table functions needed for main.
 
-'''
+"""
 
 import libtcodpy as libtcod
 import random

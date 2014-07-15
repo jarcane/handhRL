@@ -1,4 +1,4 @@
-'''
+"""
 handhRL
 Hulks and Horrors: The Roguelike
 
@@ -16,16 +16,15 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 import math
 import textwrap
 import shelve
-import time
 import os
 import operator
 import random
 
-from hhmessage import generate_starpic, generate_screen
+import hhmessage
 import libtcodpy as libtcod
 import hhtable
 
@@ -537,91 +536,10 @@ class Confuse:
         message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
 
 
-def show_text_log(text, img=None, delay=True, center_first_line=False):
-    # takes list of text and displays it line by line against a black screen
-    # optional parameters: img = an image based in libtcod.image format, defaults to None (black screen)
-    # delay = whether to use the text delay, defaults to True (for cinematic style sequences)
-    if img is None:
-        img = libtcod.image_new(160, 100)
-    libtcod.image_blit_2x(img, 0, 0, 0)
-
-    libtcod.console_set_default_foreground(0, libtcod.green)
-
-    for y in range(len(text)):
-        key = libtcod.console_check_for_keypress()
-
-        if key.vk == libtcod.KEY_ESCAPE:
-            return
-        else:
-            if center_first_line and y == 0:
-                libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE,
-                                         libtcod.CENTER, text[y])
-            else:
-                libtcod.console_print_ex(0, SCREEN_WIDTH / 8, SCREEN_HEIGHT / 5 + y * 2, libtcod.BKGND_NONE,
-                                         libtcod.LEFT, text[y])
-
-            if delay == True:
-                libtcod.console_flush()
-                time.sleep(1.3)
-                key = libtcod.console_check_for_keypress()
-                if key.vk == libtcod.KEY_SPACE:
-                    delay = False
-
-    libtcod.console_set_default_foreground(0, libtcod.white)
-    libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
-                             'Press any key to continue')
-    libtcod.console_flush()
-    libtcod.console_wait_for_keypress(True)
-
-
-def intro_sequence():
-    # Shows a text intro 'cinematic' sequence for starting up a new game.
-
-    intro_msg = [
-        '*INITIATE COMM SEQUENCE EMERGENCY ALPHA-0x1*',
-        'This is Guild Post Alpha Ceti calling GSS Ark-1.',
-        'Ark-1, do you read?',
-        'Captain Rogers, are you there?',
-        'Can anyone read this?',
-        'You must divert course, I repeat ...',
-        '*LOSING SIGNAL*',
-        '... collision course ...',
-        '*MESSAGE CORRUPTED*',
-        '... Gamma Crionis ...',
-        '*26247525* class 4 *10040522* quarantine ...',
-        '... *21220104* highly unstable ...',
-        '*23647515*',
-        'We are sending help *21242056* stay alive.']
-
-    show_text_log(intro_msg, generate_screen())
-
-
-def help_screen():
-    # display a message with information about available key commands
-    help_text = [
-        'Game Controls',
-        '',
-        'ESC - Exit to menu, saving game',
-        'Alt+Enter - toggle fullscreen',
-        'NumPad or Arrows - move character or attack adjacent',
-        '5 or Space - wait one turn',
-        'h or ? - display this help screen',
-        's - shoot with ranged weapon if equipped',
-        'a - check ammo of equipped ranged weapon',
-        'g - get item beneath character',
-        'i - inventory/use item',
-        'd - drop item',
-        'c - character status',
-        '< - descend stairs'
-    ]
-
-    show_text_log(help_text, generate_screen(), delay=False, center_first_line=True)
-
-
 def main_menu(firstrun=False):
     # The main game menu.
 
-    img = generate_starpic()
+    img = hhmessage.generate_starpic()
 
     while not libtcod.console_is_window_closed():
         # show the background image, at twice the regular resolution
@@ -670,7 +588,7 @@ def new_game(firstrun=False):
 
     # play intro sequence if starting up
     if firstrun:
-        intro_sequence()
+        hhmessage.intro_sequence()
 
 
     # create Player object
@@ -678,7 +596,7 @@ def new_game(firstrun=False):
     fighter_component = Fighter(hp=rolldice(3, 6) + rolldice(1, 10), armor_class=10, to_hit=1, damage=1,
                                 damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
-    player = Object(0, 0, chr(1), get_text_entry('What is your name, Ensign?', generate_screen()),
+    player = Object(0, 0, chr(1), get_text_entry('What is your name, Ensign?', hhmessage.generate_screen()),
                     libtcod.white, blocks=True, fighter=fighter_component)
     player.level = 1
 
@@ -821,7 +739,7 @@ def show_scores():
 
     score_file.close()
 
-    show_text_log(score_list, generate_starpic(), delay=False, center_first_line=True)
+    hhmessage.show_text_log(score_list, hhmessage.generate_starpic(), delay=False, center_first_line=True)
 
 
 def end_game():
@@ -838,7 +756,7 @@ def end_game():
         '*silence*'
     ]
 
-    show_text_log(ending, generate_starpic())
+    hhmessage.show_text_log(ending, hhmessage.generate_starpic())
     os.remove('savegame')
     main_menu()
 
@@ -916,7 +834,7 @@ def handle_keys(key, mouse):
                     highest = 'H' + str(player.fighter.damage_roll[2])
                 except:
                     highest = ''
-                show_text_log([
+                hhmessage.show_text_log([
                                   'Character Information',
                                   'Name: ' + player.name,
                                   'Level: ' + str(player.level),
@@ -928,9 +846,9 @@ def handle_keys(key, mouse):
                                   'Damage Bonus: +' + str(player.fighter.damage),
                                   'Damage Roll: ' + str(player.fighter.damage_roll[0]) + 'd' + str(
                                       player.fighter.damage_roll[1]) + highest,
-                              ], generate_screen(), delay=False)
+                              ], hhmessage.generate_screen(), delay=False)
             if key_char == 'h' or key_char == '?':
-                help_screen()
+                hhmessage.help_screen()
             return 'didnt-take-turn'
 
 
