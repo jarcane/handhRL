@@ -99,7 +99,7 @@ class Object:
     # this is a generic object: the player, a monster, an item, the stairs...
     # it's always represented by a character on the screen.
     def __init__(self, x, y, char, name, color, blocks=False, always_visible=False, fighter=None, ai=None, item=None,
-                 equipment=None, seen_player=False, killed_by=None):
+                 equipment=None, placeable=None, seen_player=False, killed_by=None):
         self.x = x
         self.y = y
         self.char = char
@@ -126,6 +126,10 @@ class Object:
             # there must be an item component for the equipment component to work properly
             self.item = Item()
             self.item.owner = self
+
+        self.placeable = placeable
+        if self.placeable:
+            self.placeable.owner = self
 
         self.seen_player = seen_player
         self.killed_by = killed_by
@@ -263,6 +267,27 @@ class Equipment:
             return
         self.is_equipped = False
         message('Dequipped ' + self.owner.name + ' from ' + self.slot + '.', libtcod.light_yellow)
+
+
+class Placeable:
+    # a class for 'placeables', interactive world objects that may be usable.
+    def __init__(self, reusable=False, used=False, use_class=None):
+        self.reusable = reusable
+        self.used = used
+        self.use_class = use_class
+        if self.use_class:
+            self.use_class.owner = self
+
+    def use(self, *args):
+        # interact with the object
+        # just call the use_function if it is defined
+        if self.use_class is None:
+            message('The ' + self.owner.name + ' cannot be used.')
+        if self.used and not self.reusable:
+            message('You have already used that object!')
+        else:
+            if self.use_class.use(*args) != 'cancelled':
+                self.used = True  # destroy after use unless cancelled
 
 
 class Fighter:
@@ -536,6 +561,15 @@ class Confuse:
         monster.ai = ConfusedMonster(old_ai, num_turns=self.duration)
         monster.ai.owner = monster  # tell the new component who owns it
         message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
+
+
+class Terminal:
+    def __init__(self):
+        pass
+
+    def use(self):
+        # get a random creepy message
+        hhmessage.creep_log()
 
 
 def main_menu(firstrun=False):
@@ -815,6 +849,13 @@ def handle_keys(key, mouse):
                     if object.x == player.x and object.y == player.y and object.item:
                         object.item.pick_up()
                         break
+            if key_char == 'u':
+                # use a placeable if present
+                for object in objects:
+                    if object.x == player.x and object.y == player.y and object.placeable:
+                        object.placeable.use()
+                        break
+
             if key_char == 'i':
                 # show the inventory
                 chosen_item = inventory_menu('Press the key next to an item to use it, or any other to cancel.\n')
@@ -1143,7 +1184,9 @@ def get_armor(x, y):
 
 
 def get_placeable(x, y):
-    return Object(x, y, chr(127), 'terminal', libtcod.silver)
+    terminal = Terminal()
+    placeable = Placeable(use_class=terminal)
+    return Object(x, y, chr(127), 'terminal', libtcod.silver, placeable=placeable)
 
 
 def place_objects(room):

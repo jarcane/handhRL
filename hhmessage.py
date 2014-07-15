@@ -115,6 +115,7 @@ def help_screen():
         's - shoot with ranged weapon if equipped',
         'a - check ammo of equipped ranged weapon',
         'g - get item beneath character',
+        'u - use object beneath character',
         'i - inventory/use item',
         'd - drop item',
         'c - character status',
@@ -122,3 +123,17 @@ def help_screen():
     ]
 
     show_text_log(help_text, generate_screen(), delay=False, center_first_line=True)
+
+
+def creep_log():
+    # display a message with some creepy text
+    message_text = [
+        'Captain\'s Log - Supplemental',
+        'I begin to fear for my life. The crew are ... different.',
+        'The doctor has cleared them all, but he seems',
+        'different too.',
+        'I do not know who to trust.',
+        'I must find refuge.'
+    ]
+
+    show_text_log(message_text, generate_screen(), center_first_line=True)
