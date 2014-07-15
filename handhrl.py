@@ -1217,7 +1217,7 @@ def get_item(x, y):
         # create a grenade
         grenade_component = Grenade()
         item_component = Item(use_function=grenade_component)
-        item = Object(x, y, '#', 'incendiary grenade', libtcod.light_yellow, item=item_component)
+        item = Object(x, y, '*', 'incendiary grenade', libtcod.light_yellow, item=item_component)
     elif choice == 4:
         # create a confuse item
         confuse_component = Confuse()
