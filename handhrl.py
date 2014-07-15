@@ -284,6 +284,8 @@ class Fighter:
     @property
     def armor_class(self):  # return actual defense, by summing up the bonuses from all equipped items
         bonus = sum(equipment.armor_bonus for equipment in get_all_equipped(self.owner))
+        if bonus < -12:
+            bonus = -12
         return self.base_armor_class + bonus
 
     @property

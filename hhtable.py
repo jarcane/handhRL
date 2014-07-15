@@ -169,3 +169,41 @@ def make_weapon():
               'ammo': ammo}
 
     return weapon
+
+
+def make_armor():
+    # generate a suit of armor or shield
+
+    # modern armors
+
+    modern_armor = [[']', 'envirosuit', -1],
+                    [']', 'vacc suit', -2],
+                    [']', 'fiberweave', -3],
+                    ['+', 'EVA suit', -4],
+                    ['+', 'carbon shell', -5],
+                    ['+', '"Jump" suit', -6],
+                    ['*', 'combat pod', -7],
+                    ['*', '"mirror" suit', -8],
+                    ['?', 'exo-armor', -9],
+                    ['?', 'exo-jet suit', -10],
+                    ['[', 'plexsteel shield', -1],
+                    ['[', 'particle shield', -2]]
+
+    ancient_types = ['light', 'medium', 'heavy', 'powered', 'shield']
+
+    ancient_chars = {'light': ']',
+                     'medium': '+',
+                     'heavy': '*',
+                     'powered': '?',
+                     'shield': '['}
+
+    ancient_names = {'light': ['hard light', 'chitin', 'steelskin', 'megafauna hide', 'titanium foil',
+                               'uncertainty field'],
+                     'medium': ['hard light', 'chitin', 'steelskin', 'megafauna hide', 'titanium foil',
+                               'uncertainty field'],
+                     'heavy': ['diamond weave', 'neutronium plate', 'Schrodinger state', 'crystal timber',
+                               'labyrinthum', 'depleted uranium'],
+                     'powered': ['diamond weave', 'neutronium plate', 'Schrodinger state', 'crystal timber',
+                               'labyrinthum', 'depleted uranium'],
+                     'shield': ['hard light', 'Pauli field', 'smart shield', 'dark matter', 'micro-singularity',
+                                'dephasic']}
