@@ -179,11 +179,11 @@ def make_armor():
     modern_armor = [[']', 'envirosuit', -1],
                     [']', 'vacc suit', -2],
                     [']', 'fiberweave', -3],
-                    ['+', 'EVA suit', -4],
-                    ['+', 'carbon shell', -5],
-                    ['+', '"Jump" suit', -6],
-                    ['*', 'combat pod', -7],
-                    ['*', '"mirror" suit', -8],
+                    ['{', 'EVA suit', -4],
+                    ['{', 'carbon shell', -5],
+                    ['{', '"Jump" suit', -6],
+                    ['+', 'combat pod', -7],
+                    ['+', '"mirror" suit', -8],
                     ['?', 'exo-armor', -9],
                     ['?', 'exo-jet suit', -10],
                     ['[', 'plexsteel shield', -1],
@@ -192,8 +192,8 @@ def make_armor():
     ancient_types = ['light', 'medium', 'heavy', 'powered', 'shield']
 
     ancient_chars = {'light': ']',
-                     'medium': '+',
-                     'heavy': '*',
+                     'medium': '{',
+                     'heavy': '+',
                      'powered': '?',
                      'shield': '['}
 
@@ -207,3 +207,57 @@ def make_armor():
                                'labyrinthum', 'depleted uranium'],
                      'shield': ['hard light', 'Pauli field', 'smart shield', 'dark matter', 'micro-singularity',
                                 'dephasic']}
+
+    ancient_suffix = {'light': 'suit',
+                      'medium': 'armor',
+                      'heavy': 'shell',
+                      'powered': 'exo-suit',
+                      'shield': 'shield'}
+
+    #check for modern or ancient
+    if rolldice(1, 4) < 4:
+        # get modern details
+        char, name, ac = random.choice(modern_armor)
+        is_modern = True
+    else:
+        # generate ancient details
+        type = random.choice(ancient_types)
+        char = ancient_chars[type]
+        name = random.choice(ancient_names[type]) + ancient_suffix[type]
+        is_modern = False
+
+        # generate base AC
+        if type == 'light':
+            ac = 10 - rolldice(1, 4)
+        elif type == 'medium':
+            ac = 7 - rolldice(1, 4)
+        elif type == 'heavy':
+            ac = 5 - rolldice(1, 4)
+        elif type == 'powered':
+            ac = 1 - rolldice(1, 2)
+        elif type == 'shield':
+            ac = 0 - rolldice(1, 2)
+
+    # generate armor bonus
+    bonus = rolldice(1, 3) - 3
+
+    # if armor bonus, append to name and add to ac
+    if bonus < 0:
+        name += ' +' + str(bonus)
+        ac += bonus
+
+    # if powered armor, it provides a STR/DEX bonus if ancient, or a simply STR bonus if modern
+    # because handhRL doesn't yet use the full stat line, we abstract this to to-hit and damage bonuses later
+    if char == '?' and not is_modern:
+        str_bonus = rolldice(1, 2)
+        dex_bonus = rolldice(1, 2) - 1
+    elif char == '?' and is_modern:
+        str_bonus = 1
+        dex_bonus = 0
+    else:
+        str_bonus = 0
+        dex_bonus = 0
+
+    armor = {'char': char, 'name': name, 'ac': ac, 'str_bonus': str_bonus, 'dex_bonus': dex_bonus}
+
+    return armor

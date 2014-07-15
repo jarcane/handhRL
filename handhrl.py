@@ -1158,26 +1158,11 @@ def get_weapon(x, y):
 
 
 def get_armor(x, y):
-    choice = libtcod.random_get_int(0, 1, 2)
+    armor = hhtable.make_armor()
 
-    if choice == 1:
-        # create a shield
-        shield_bonus = rolldice(1, 3) - 3
-        if shield_bonus < 0:
-            shield_name = str(shield_bonus) + ' plexsteel shield'
-        else:
-            shield_name = 'plexsteel shield'
-        equipment_component = Equipment(slot='left hand', armor_bonus=-1 + shield_bonus)
-        item = Object(x, y, '[', shield_name, libtcod.darker_orange, equipment=equipment_component)
-    elif choice == 2:
-        # create vacc suit armor
-        armor_bonus = rolldice(1, 3) - 3
-        if armor_bonus < 0:
-            armor_name = str(armor_bonus) + ' vacc suit'
-        else:
-            armor_name = 'vacc suit'
-        equipment_component = Equipment(slot='armor', armor_bonus=-2 + armor_bonus)
-        item = Object(x, y, ']', armor_name, libtcod.silver, equipment=equipment_component)
+    equipment_component = Equipment(slot='armor', armor_bonus=armor['ac'], damage_bonus=armor['str_bonus'],
+                                    to_hit_bonus=armor['dex_bonus'])
+    item = Object(x, y, armor['char'], armor['name'], libtcod.dark_gray, equipment=equipment_component)
 
     return item
 
