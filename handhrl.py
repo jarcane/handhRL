@@ -184,6 +184,8 @@ class Item:
     # an item that can be picked up and used.
     def __init__(self, use_function=None):
         self.use_function = use_function
+        if self.use_function:
+            self.use_function.owner = self
 
     def use(self, *args):
         # just call the use_function if it is defined
