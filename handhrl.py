@@ -330,7 +330,7 @@ class Fighter:
         to_hit_target = self.to_hit + target.fighter.armor_class + 5
         if to_hit_target > 20:
             to_hit_target = 20
-        elif to_hit_target = 1:
+        elif to_hit_target == 1:
             to_hit_target = 2
 
         # check of the target is attacking with a gun
@@ -398,7 +398,7 @@ class Fighter:
         to_hit_target = self.to_hit + target.fighter.armor_class + 5
         if to_hit_target > 20:
             to_hit_target = 20
-        elif to_hit_target = 1:
+        elif to_hit_target == 1:
             to_hit_target = 2
 
         # deduct ammo
