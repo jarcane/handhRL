@@ -17,8 +17,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-
-import libtcodpy as libtcod
 import math
 import textwrap
 import shelve
@@ -26,6 +24,9 @@ import time
 import os
 import operator
 import random
+
+from hhmessage import generate_starpic, generate_screen
+import libtcodpy as libtcod
 import hhtable
 
 
@@ -534,37 +535,6 @@ class Confuse:
         monster.ai = ConfusedMonster(old_ai, num_turns=self.duration)
         monster.ai.owner = monster  # tell the new component who owns it
         message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
-
-
-
-def generate_starpic():
-    # Generates a random starfield pattern and stores it in img
-    img = libtcod.image_new(160, 100)
-    libtcod.image_clear(img, libtcod.black)
-    colors = [libtcod.lightest_yellow, libtcod.lightest_grey, libtcod.white, libtcod.white, libtcod.light_orange,
-              libtcod.darker_red]
-
-    for x in range(100):
-        x = libtcod.random_get_int(0, 0, 159)
-        y = libtcod.random_get_int(0, 0, 99)
-        c = libtcod.random_get_int(0, 0, len(colors) - 1)
-        libtcod.image_put_pixel(img, x, y, colors[c])
-
-    return img
-
-
-def generate_screen():
-    # create 'computer screen' backdrop and store in screen_img
-    screen_img = libtcod.image_new(160, 100)
-    for x in range(124):
-        for y in range(68):
-            libtcod.image_put_pixel(screen_img, x + 16, y + 16, libtcod.grey)
-    for x in range(120):
-        for y in range(60):
-            libtcod.image_put_pixel(screen_img, x + 18, y + 18, libtcod.darkest_green)
-    for x in range(3):
-        libtcod.image_put_pixel(screen_img, x + 132, 80, libtcod.red)
-    return screen_img
 
 
 def show_text_log(text, img=None, delay=True, center_first_line=False):
