@@ -265,7 +265,7 @@ class Equipment:
 
 class Fighter:
     # combat-related properties and methods (monster, player, npc)
-    def __init__(self, hp, armor_class, to_hit, damage, damage_roll, xp, death_function=None):
+    def __init__(self, hp, armor_class, to_hit, damage, damage_roll, xp, kills=0, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
         self.base_armor_class = armor_class
@@ -273,6 +273,7 @@ class Fighter:
         self.base_damage = damage
         self.base_roll = damage_roll
         self.xp = xp
+        self.kills = kills
         self.death_function = death_function
 
     @property
@@ -316,6 +317,7 @@ class Fighter:
 
             if self.owner != player:  # yield xp to player
                 player.fighter.xp += self.xp
+                player.fighter.kills += 1
 
     def heal(self, amount):
         # heal by the given amount, without going over max_hp
@@ -728,7 +730,7 @@ def load_game():
 
 def new_score(player):
     # generate a new score from player and dungeon_level, save it to file, then ask to display it.
-    score = player.fighter.xp * player.level * (13 - dungeon_level)
+    score = player.fighter.kills * player.level * (13 - dungeon_level)
     score_data = [score, player.name.title(), player.killed_by, str(dungeon_level)]
 
     scores = shelve.open('scorefile', 'c', writeback=True)
@@ -1105,7 +1107,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
         roll = (num / 2, sides)
 
     fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10 - num, to_hit=to_hit,
-                                damage=0, damage_roll=roll, xp=num * sides * 10, death_function=monster_death)
+                                damage=0, damage_roll=roll, xp=num * sides * 5, death_function=monster_death)
     ai_component = BasicMonster()
     monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
 
