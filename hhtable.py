@@ -223,7 +223,7 @@ def make_armor():
         # generate ancient details
         type = random.choice(ancient_types)
         char = ancient_chars[type]
-        name = random.choice(ancient_names[type]) + ancient_suffix[type]
+        name = random.choice(ancient_names[type]) + ' ' + ancient_suffix[type]
         is_modern = False
 
         # generate base AC
@@ -238,12 +238,15 @@ def make_armor():
         elif type == 'shield':
             ac = 0 - rolldice(1, 2)
 
+        # recompute ac as a bonus to base 10
+        ac += -10
+
     # generate armor bonus
     bonus = rolldice(1, 3) - 3
 
     # if armor bonus, append to name and add to ac
     if bonus < 0:
-        name += ' +' + str(bonus)
+        name += ' ' + str(bonus)
         ac += bonus
 
     # if powered armor, it provides a STR/DEX bonus if ancient, or a simply STR bonus if modern

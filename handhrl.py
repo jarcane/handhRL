@@ -185,12 +185,12 @@ class Item:
     def __init__(self, use_function=None):
         self.use_function = use_function
 
-    def use(self):
+    def use(self, *args):
         # just call the use_function if it is defined
         if self.use_function is None:
             message('The ' + self.owner.name + ' cannot be used.')
         else:
-            if self.use_function() != 'cancelled':
+            if self.use_function.use(*args) != 'cancelled':
                 inventory.remove(self.owner)  # destroy after use unless cancelled
 
         # special case: if object has equipment component, the use option is to equip/dequip
@@ -459,6 +459,82 @@ class ConfusedMonster:
         else:  # restore previous AI
             self.owner.ai = self.old_ai
             message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
+
+class Heal:
+    # generic process for healing items
+    def __init__(self, dice=HEAL_AMOUNT, max_boost=False):
+        self.dice = dice
+        self.max_boost = max_boost
+
+    def use(self):
+        # heal the player
+        if player.fighter.hp == player.fighter.max_hp:
+            message('You are already at full health.', libtcod.red)
+            return 'cancelled'
+
+        heal_roll = rolldice(*self.dice)
+        message('Your pain subsides, for now. You restore ' + str(heal_roll) + ' hit points.', libtcod.light_violet)
+        player.fighter.heal(heal_roll)
+
+
+class RandomDamage:
+    # generic process for items that damage a random target
+    def __init__(self, damage=LIGHTNING_DAMAGE, attackrange=LIGHTNING_RANGE):
+        self.damage = damage
+        self.attackrange = attackrange
+
+    def use(self):
+        # find closest enemy inside max range and damage it
+        monster = closest_monster(self.attackrange)
+        if monster is None:  # no enemy found within range
+            message('No enemy is within arc range.')
+            return 'cancelled'
+
+        # zap it!
+        damage = rolldice(*self.damage)
+        message('A bolt of electricity arcs into the ' + monster.name + ' with a loud ZZZAP! The damage is ' + str(
+            damage) + ' hit points.', libtcod.light_blue)
+        monster.fighter.take_damage(damage, 'electrical discharge')
+
+
+class Grenade:
+    # generic grenade throw function
+    def __init__(self, damage=FIREBALL_DAMAGE, radius=FIREBALL_RADIUS):
+        self.damage = damage
+        self.radius = radius
+
+    def use(self):
+        # ask the player for a target tile to throw a 'fireball' at (ie. grenade, AOE, etc)
+        message('Left-click a target tile, or right-click to cancel.', libtcod.light_cyan)
+        (x, y) = target_tile()
+        if x is None:
+            return 'cancelled'
+        message('The device explodes, burning everything within ' + str(self.radius) + ' tiles!', libtcod.orange)
+
+        for obj in objects:  # damage every fighter in range, including the player
+            if obj.distance(x, y) <= self.radius and obj.fighter:
+                damage_rolled = rolldice(*self.damage)
+                message('The ' + obj.name + ' gets burned for ' + str(damage_rolled) + ' hit points.', libtcod.orange)
+                obj.fighter.take_damage(damage_rolled, 'own fireball')
+
+
+class Confuse:
+    # generic class for confusion items
+    def __init__(self, duration=CONFUSE_NUM_TURNS, attackrange=CONFUSE_RANGE):
+        self.duration = duration
+        self.attackrange = attackrange
+
+    def use(self):
+        # ask for target and confuse it
+        message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
+        monster = target_monster(self.attackrange)
+        if monster is None:
+            return 'cancelled'
+        old_ai = monster.ai
+        monster.ai = ConfusedMonster(old_ai, num_turns=self.duration)
+        monster.ai.owner = monster  # tell the new component who owns it
+        message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
+
 
 
 def generate_starpic():
@@ -1129,19 +1205,23 @@ def get_item(x, y):
 
     if choice == 1:
         # create a healing item
-        item_component = Item(use_function=cast_heal)
+        heal_component = Heal()
+        item_component = Item(use_function=heal_component)
         item = Object(x, y, '!', 'dose of Opacaine', libtcod.violet, item=item_component)
     elif choice == 2:
         # create an arc lightning device
-        item_component = Item(use_function=cast_lightning)
+        random_damage_component = RandomDamage()
+        item_component = Item(use_function=random_damage_component)
         item = Object(x, y, '#', 'Tesla arc device', libtcod.light_yellow, item=item_component)
     elif choice == 3:
         # create a grenade
-        item_component = Item(use_function=cast_fireball)
+        grenade_component = Grenade()
+        item_component = Item(use_function=grenade_component)
         item = Object(x, y, '#', 'incendiary grenade', libtcod.light_yellow, item=item_component)
     elif choice == 4:
         # create a confuse item
-        item_component = Item(use_function=cast_confuse)
+        confuse_component = Confuse()
+        item_component = Item(use_function=confuse_component)
         item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
 
     return item
@@ -1160,7 +1240,12 @@ def get_weapon(x, y):
 def get_armor(x, y):
     armor = hhtable.make_armor()
 
-    equipment_component = Equipment(slot='armor', armor_bonus=armor['ac'], damage_bonus=armor['str_bonus'],
+    if armor['char'] == '[':
+        armor_slot = 'shield'
+    else:
+        armor_slot = 'armor'
+
+    equipment_component = Equipment(slot=armor_slot, armor_bonus=armor['ac'], damage_bonus=armor['str_bonus'],
                                     to_hit_bonus=armor['dex_bonus'])
     item = Object(x, y, armor['char'], armor['name'], libtcod.dark_gray, equipment=equipment_component)
 
@@ -1625,57 +1710,6 @@ def check_level_up():
             player.fighter.base_to_hit += 1
             player.fighter.base_damage += 1
 
-
-def cast_heal():
-    # heal the player
-    if player.fighter.hp == player.fighter.max_hp:
-        message('You are already at full health.', libtcod.red)
-        return 'cancelled'
-
-    heal_roll = rolldice(*HEAL_AMOUNT)
-    message('Your pain subsides, for now. You restore ' + str(heal_roll) + ' hit points.', libtcod.light_violet)
-    player.fighter.heal(heal_roll)
-
-
-def cast_lightning():
-    # find closest enemy inside max range and damage it
-    monster = closest_monster(LIGHTNING_RANGE)
-    if monster is None:  # no enemy found within range
-        message('No enemy is within arc range.')
-        return 'cancelled'
-
-    # zap it!
-    damage = rolldice(*LIGHTNING_DAMAGE)
-    message('A bolt of electricity arcs into the ' + monster.name + ' with a loud ZZZAP! The damage is ' + str(
-        damage) + ' hit points.', libtcod.light_blue)
-    monster.fighter.take_damage(damage, 'electrical discharge')
-
-
-def cast_confuse():
-    # ask for target and confuse it
-    message('Left-click an enemy to confuse it, or right-click to cancel.', libtcod.light_cyan)
-    monster = target_monster(CONFUSE_RANGE)
-    if monster is None:
-        return 'cancelled'
-    old_ai = monster.ai
-    monster.ai = ConfusedMonster(old_ai)
-    monster.ai.owner = monster  # tell the new component who owns it
-    message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
-
-
-def cast_fireball():
-    # ask the player for a target tile to throw a 'fireball' at (ie. grenade, AOE, etc)
-    message('Left-click a target tile, or right-click to cancel.', libtcod.light_cyan)
-    (x, y) = target_tile()
-    if x is None:
-        return 'cancelled'
-    message('The device explodes, burning everything within ' + str(FIREBALL_RADIUS) + ' tiles!', libtcod.orange)
-
-    for obj in objects:  # damage every fighter in range, including the player
-        if obj.distance(x, y) <= FIREBALL_RADIUS and obj.fighter:
-            damage_rolled = rolldice(*FIREBALL_DAMAGE)
-            message('The ' + obj.name + ' gets burned for ' + str(damage_rolled) + ' hit points.', libtcod.orange)
-            obj.fighter.take_damage(damage_rolled, 'own fireball')
 
 # ############################################
 # Initialization & Main Loop
