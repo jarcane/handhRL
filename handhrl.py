@@ -484,22 +484,22 @@ class BasicMonster:
 class FriendlyMonster:
     def __init__(self, max_range=10):
         self.max_range = max_range
-        self.target = None
+
 
     def take_turn(self):
         # a monster that protects the player and attacks other monsters
         monster = self.owner
-        if self.target is None:
-            self.target = closest_monster(self.max_range)
-        enemy = self.target
-        if 2 <= monster.distance_to(enemy) <= self.max_range:
-            monster.move_towards(enemy.x, enemy.y)
+        enemy = closest_monster(self.max_range, (monster, player))
 
-        elif enemy.fighter.hp > 0:
-            monster.fighter.attack(enemy)
+        if enemy is not None:
+            message(self.owner.name + ' is targeting ' + enemy.name)
+            if 2 <= monster.distance_to(enemy) <= self.max_range:
+                monster.move_towards(enemy.x, enemy.y)
 
-        if not enemy.fighter:
-            self.target = None
+            elif enemy.fighter.hp > 0:
+                monster.fighter.attack(enemy)
+        else:
+            monster.move_towards(player.x, player.y)
 
 
 class ConfusedMonster:
@@ -571,7 +571,7 @@ class RandomDamage:
 
     def use(self):
         # find closest enemy inside max range and damage it
-        monster = closest_monster(self.attackrange)
+        monster = closest_monster(self.attackrange, (player))
         if monster is None:  # no enemy found within range
             message('No enemy is within arc range.')
             return 'cancelled'
@@ -1274,7 +1274,7 @@ def get_item(x, y):
         item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
 
     elif choice == 'misc':
-        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector', 'summon', 'vector'])
+        subchoice = random.choice(['summon'])
 
         if subchoice == 'random_damage':
             # create an arc lightning device
@@ -1725,13 +1725,13 @@ def is_blocked(x, y):
     return False
 
 
-def closest_monster(max_range):
+def closest_monster(max_range, exclusions):
     # find closest enemy, up to a max range and in player FOV
     closest_enemy = None
     closest_dist = max_range + 1  # start with slightly more than max range
 
     for object in objects:
-        if object.fighter and not object == player and libtcod.map_is_in_fov(fov_map, object.x, object.y):
+        if object.fighter and object not in exclusions and libtcod.map_is_in_fov(fov_map, object.x, object.y):
             # calculate distance between this object and the player
             dist = player.distance_to(object)
             if dist < closest_dist:  # it's closer so remember it
