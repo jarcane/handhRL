@@ -277,7 +277,7 @@ def make_heal_item():
         'panacea': ['Panacea', None, True, 10, True]
     }
 
-    name, roll, reuse, uses, heal_all = random.choice(items)
+    name, roll, reuse, uses, heal_all = items[random.choice(items.keys())]
 
     if not reuse:
         name = 'dose of ' + name
