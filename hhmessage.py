@@ -77,7 +77,13 @@ def show_text_log(text, img=None, delay=True, center_first_line=False):
     libtcod.console_print_ex(0, SCREEN_WIDTH / 2, SCREEN_HEIGHT - 2, libtcod.BKGND_NONE, libtcod.CENTER,
                              'Press any key to continue')
     libtcod.console_flush()
-    libtcod.console_wait_for_keypress(True)
+    input_valid = False
+    while not input_valid:
+        key = libtcod.console_wait_for_keypress(True)
+        if key.pressed:
+            key = libtcod.console_wait_for_keypress(False)
+            if not key.pressed:
+                input_valid = True
 
 
 def intro_sequence():
