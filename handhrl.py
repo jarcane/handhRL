@@ -481,6 +481,27 @@ class BasicMonster:
                 monster.fighter.attack(player)
 
 
+class FriendlyMonster:
+    def __init__(self, max_range=10):
+        self.max_range = max_range
+        self.target = None
+
+    def take_turn(self):
+        # a monster that protects the player and attacks other monsters
+        monster = self.owner
+        if self.target is None:
+            self.target = closest_monster(self.max_range)
+        enemy = self.target
+        if 2 <= monster.distance_to(enemy) <= self.max_range:
+            monster.move_towards(enemy.x, enemy.y)
+
+        elif enemy.fighter.hp > 0:
+            monster.fighter.attack(enemy)
+
+        if enemy.fighter.hp < 1:
+            self.target = None
+
+
 class ConfusedMonster:
     # AI for a temporarily confused monster (reverts to normal AI after a while)
     def __init__(self, old_ai, num_turns=CONFUSE_NUM_TURNS):
@@ -633,12 +654,17 @@ class Detector:
 
 
 class Summon:
-    def __init__(self, name, hitdice):
+    # summon a friendly monster
+    def __init__(self, name, hitdice, color):
         self.name = name
         self.hitdice = hitdice
+        self.color = color
 
     def use(self):
-        pass
+        x = player.x
+        y = player.y
+        summon = get_monster_from_hitdice(x, y, self.name, self.hitdice, self.color, friendly=True)
+        objects.append(summon)
 
 
 class Terminal:
@@ -1192,7 +1218,7 @@ def from_player_level(table):
     return 0
 
 
-def get_monster_from_hitdice(x, y, name, hitdice, color):
+def get_monster_from_hitdice(x, y, name, hitdice, color, friendly=False):
     # generate monster object from number of hit dice
     # get tuple components
     num = hitdice[0]
@@ -1220,7 +1246,10 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
     fighter_component = Fighter(hp=hhtable.rolldice(*hitdice), armor_class=10 - num, to_hit=to_hit,
                                 damage=0, damage_roll=roll, xp=num * sides * 5, death_function=monster_death)
-    ai_component = BasicMonster()
+    if friendly:
+        ai_component = FriendlyMonster()
+    else:
+        ai_component = BasicMonster()
     monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
 
     return monster
@@ -1245,7 +1274,7 @@ def get_item(x, y):
         item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
 
     elif choice == 'misc':
-        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector'])
+        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector', 'summon'])
 
         if subchoice == 'random_damage':
             # create an arc lightning device
@@ -1266,8 +1295,13 @@ def get_item(x, y):
         elif subchoice == 'detector':
             # create a motion tracker
             detector_component = Detector(detect_range=10)
-            item_component = Item(reusable=True, uses=rolldice(1, 3), use_function=detector_component)
+            item_component = Item(reusable=True, uses=hhtable.rolldice(1, 3), use_function=detector_component)
             item = Object(x, y, '#', 'motion tracker', libtcod.light_yellow, item=item_component)
+        elif subchoice == 'summon':
+            # create a friendly summonable monster
+            summon_component = Summon(name='TED-3', hitdice=(4, 6), color=libtcod.sepia)
+            item_component = Item(use_function=summon_component)
+            item = Object(x, y, chr(12), 'TED-3', libtcod.sepia, item=item_component)
 
     return item
 
