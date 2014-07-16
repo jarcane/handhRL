@@ -564,12 +564,17 @@ class Confuse:
 
 
 class Terminal:
-    def __init__(self):
-        pass
+    def __init__(self, type=None):
+        self.type = type
+        if self.type is None:
+            self.type = random.choice(['log','hint'])
 
     def use(self):
         # get a random creepy message
-        hhmessage.creep_log()
+        if self.type == 'log':
+            hhmessage.creep_log()
+        if self.type == 'hint':
+            hhmessage.hint_message()
 
 
 class HealPod:

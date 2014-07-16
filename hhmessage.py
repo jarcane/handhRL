@@ -137,3 +137,14 @@ def creep_log():
     ]
 
     show_text_log(message_text, generate_screen(), center_first_line=True)
+
+
+def hint_message():
+    # display "helpful" hints
+    message_text = [
+        'Helpful Hint #1',
+        '',
+        'Try not to die.'
+    ]
+
+    show_text_log(message_text, generate_screen(), delay=False, center_first_line=True)
