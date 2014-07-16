@@ -77,6 +77,7 @@ def make_weapon():
                      ['/', 'cutlass', (1, 8)],
                      ['/', 'vibro-sword', (1, 10)],
                      ['/', 'laser sword', [2, 10, 1]],
+                     [chr(14), 'The Axe', (1, 12)],
                      [')', 'laser pistol', [2, 6, 1]],
                      [')', 'slug pistol', (1, 8)],
                      [')', 'particle beamer', (1, 10)],
@@ -186,6 +187,7 @@ def make_armor():
                     ['+', '"mirror" suit', -8],
                     ['?', 'exo-armor', -9],
                     ['?', 'exo-jet suit', -10],
+                    ['?', 'bioweapon suit', -5],
                     ['[', 'plexsteel shield', -1],
                     ['[', 'particle shield', -2]]
 
@@ -254,6 +256,9 @@ def make_armor():
     if char == '?' and not is_modern:
         str_bonus = rolldice(1, 2)
         dex_bonus = rolldice(1, 2) - 1
+    elif char == '?' and is_modern and name == 'bioweapon suit':
+        str_bonus = 2
+        dex_bonus = 2
     elif char == '?' and is_modern:
         str_bonus = 1
         dex_bonus = 0

@@ -1274,7 +1274,7 @@ def get_item(x, y):
         item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
 
     elif choice == 'misc':
-        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector', 'summon'])
+        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector', 'summon', 'vector'])
 
         if subchoice == 'random_damage':
             # create an arc lightning device
@@ -1302,6 +1302,10 @@ def get_item(x, y):
             summon_component = Summon(name='TED-3', hitdice=(4, 6), color=libtcod.sepia)
             item_component = Item(use_function=summon_component)
             item = Object(x, y, chr(12), 'TED-3', libtcod.sepia, item=item_component)
+        elif subchoice == 'vector':
+            # create the vector-jet harness
+            harness = Equipment('back',armor_bonus=-1)
+            item = Object(x, y, '%', 'vector-jet harness', libtcod.black, equipment=harness)
 
     return item
 
