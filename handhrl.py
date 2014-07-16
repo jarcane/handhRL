@@ -537,9 +537,13 @@ class RandomDamage:
 
 class Grenade:
     # generic grenade throw function
-    def __init__(self, damage=FIREBALL_DAMAGE, radius=FIREBALL_RADIUS):
+    def __init__(self, damage=FIREBALL_DAMAGE, radius=FIREBALL_RADIUS, radius_damage=FIREBALL_DAMAGE, kills=False,
+                 kills_radius=False):
         self.damage = damage
         self.radius = radius
+        self.radius_damage = radius_damage
+        self.kills = kills
+        self.kills_radius = kills_radius
 
     def use(self):
         # ask the player for a target tile to throw a 'fireball' at (ie. grenade, AOE, etc)
@@ -547,13 +551,25 @@ class Grenade:
         (x, y) = target_tile()
         if x is None:
             return 'cancelled'
-        message('The device explodes, burning everything within ' + str(self.radius) + ' tiles!', libtcod.orange)
+        message('The device explodes, striking everything within ' + str(self.radius) + ' tiles!', libtcod.orange)
 
         for obj in objects:  # damage every fighter in range, including the player
-            if obj.distance(x, y) <= self.radius and obj.fighter:
-                damage_rolled = hhtable.rolldice(*self.damage)
-                message('The ' + obj.name + ' gets burned for ' + str(damage_rolled) + ' hit points.', libtcod.orange)
-                obj.fighter.take_damage(damage_rolled, 'own fireball')
+            if obj.distance(x, y) == 0:
+                if not self.kills:
+                    damage_rolled = hhtable.rolldice(*self.damage)
+                else:
+                    damage_rolled = obj.fighter.hp
+                message('The ' + obj.name + ' is at ground zero! Takes ' + str(damage_rolled) + ' hit points.',
+                        libtcod.orange)
+                obj.fighter.take_damage(damage_rolled, 'own grenade')
+            elif obj.distance(x, y) <= self.radius and obj.fighter:
+                if not self.kills_radius:
+                    damage_rolled = hhtable.rolldice(*self.radius_damage)
+                else:
+                    damage_rolled = obj.fighter.hp
+                message('The ' + obj.name + ' takes blast damage for ' + str(damage_rolled) + ' hit points.',
+                        libtcod.orange)
+                obj.fighter.take_damage(damage_rolled, 'own grenade')
 
 
 class Confuse:
@@ -1159,7 +1175,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
 
 def get_item(x, y):
-    choice = random.choice(['heal', 'random_damage', 'grenade', 'confuse'])
+    choice = random.choice(['heal', 'grenade', 'misc'])
 
     if choice == 'heal':
         # create a healing item
@@ -1167,21 +1183,27 @@ def get_item(x, y):
         heal_component = Heal(dice=heal_item['roll'], heal_all=heal_item['heal_all'])
         item_component = Item(reusable=heal_item['reuse'], uses=heal_item['uses'], use_function=heal_component)
         item = Object(x, y, '!', heal_item['name'], libtcod.violet, item=item_component)
-    elif choice == 'random_damage':
-        # create an arc lightning device
-        random_damage_component = RandomDamage()
-        item_component = Item(use_function=random_damage_component)
-        item = Object(x, y, '#', 'Tesla arc device', libtcod.light_yellow, item=item_component)
     elif choice == 'grenade':
         # create a grenade
-        grenade_component = Grenade()
+        grenade = hhtable.make_grenade()
+        grenade_component = Grenade(damage=grenade['damage'], radius=grenade['radius'],
+                                    radius_damage=grenade['radius_damage'], kills=grenade['kills'],
+                                    kills_radius=grenade['kills_radius'])
         item_component = Item(use_function=grenade_component)
-        item = Object(x, y, '*', 'incendiary grenade', libtcod.light_yellow, item=item_component)
-    elif choice == 'confuse':
-        # create a confuse item
-        confuse_component = Confuse()
-        item_component = Item(use_function=confuse_component)
-        item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
+        item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
+    elif choice == 'misc':
+        subchoice = random.choice(['confuse', 'random_damage'])
+
+        if subchoice == 'random_damage':
+            # create an arc lightning device
+            random_damage_component = RandomDamage()
+            item_component = Item(use_function=random_damage_component)
+            item = Object(x, y, '#', 'Tesla arc device', libtcod.light_yellow, item=item_component)
+        elif subchoice == 'confuse':
+            # create a confuse item
+            confuse_component = Confuse()
+            item_component = Item(use_function=confuse_component)
+            item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
 
     return item
 

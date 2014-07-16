@@ -270,14 +270,14 @@ def make_heal_item():
     # create parameters for a healing item
 
     # parameter list: name, rolldice tuple, reusable flag, # of uses, heal_all flag
-    items = {
-        'opacaine': ['Opacaine', (1, 4), False, 1, False],
-        'firstaid': ['first-aid kit', (1, 6), True, 3, False],
-        'heal-x': ['Heal-X', None, False, 1, True],
-        'panacea': ['Panacea', None, True, 10, True]
-    }
+    items = [
+        ['Opacaine', (1, 4), False, 1, False],
+        ['first-aid kit', (1, 6), True, 3, False],
+        ['Heal-X', None, False, 1, True],
+        ['Panacea', None, True, 10, True]
+    ]
 
-    name, roll, reuse, uses, heal_all = items[random.choice(items.keys())]
+    name, roll, reuse, uses, heal_all = random.choice(items)
 
     if not reuse:
         name = 'dose of ' + name
@@ -288,6 +288,36 @@ def make_heal_item():
         'reuse': reuse,
         'uses': uses,
         'heal_all': heal_all
+    }
+
+    return item
+
+
+def make_grenade():
+    # create a grenade object
+
+    # parameter list: name, target damage, blast radius, radius damage, automatically kills,
+    # automatically kills in radius
+    grenades = [
+        ['frag', (3, 6), 3, (1, 6), False, False],
+        ['incendiary', (1, 6), 3, (1, 6), False, False],
+        ['plasma', (4, 6), 3, (4, 6), False, False],
+        ['Thermex', (4, 6), 0, None, False, False],
+        ['Compound S', (5, 6), 3, (3, 6), False, False],
+        ['microfission', None, 12, None, True, True]
+    ]
+
+    name, damage, radius, radius_damage, kills, kills_radius = random.choice(grenades)
+
+    name += ' grenade'
+
+    item = {
+        'name': name,
+        'damage': damage,
+        'radius': radius,
+        'radius_damage': radius_damage,
+        'kills': kills,
+        'kills_radius': kills_radius
     }
 
     return item
