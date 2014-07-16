@@ -498,7 +498,7 @@ class FriendlyMonster:
         elif enemy.fighter.hp > 0:
             monster.fighter.attack(enemy)
 
-        if enemy.fighter.hp < 1:
+        if not enemy.fighter:
             self.target = None
 
 
@@ -551,10 +551,10 @@ class Buff:
 
     def use(self):
         # apply all bonuses from the item
-        player.fighter.max_hp += self.max_hp
-        player.fighter.to_hit += self.to_hit
-        player.fighter.damage += self.damage
-        player.fighter.armor_class += self.ac
+        player.fighter.base_max_hp += self.max_hp
+        player.fighter.base_to_hit += self.to_hit
+        player.fighter.base_damage += self.damage
+        player.fighter.base_armor_class += self.ac
         player.fighter.xp += self.xp
         player.fighter.damage_resistance += self.dr
         if self.desc is None:
@@ -602,12 +602,12 @@ class Grenade:
         message('The device explodes, striking everything within ' + str(self.radius) + ' tiles!', libtcod.orange)
 
         for obj in objects:  # damage every fighter in range, including the player
-            if obj.distance(x, y) == 0:
+            if obj.distance(x, y) == 0 and obj.fighter:
                 if not self.kills:
                     damage_rolled = hhtable.rolldice(*self.damage)
                 else:
                     damage_rolled = obj.fighter.hp
-                message('The ' + obj.name + ' is at ground zero! Takes ' + str(damage_rolled) + ' hit points.',
+                message(obj.name.capitalize() + ' is at ground zero! Takes ' + str(damage_rolled) + ' hit points.',
                         libtcod.orange)
                 obj.fighter.take_damage(damage_rolled, 'own grenade')
             elif obj.distance(x, y) <= self.radius and obj.fighter:
@@ -615,7 +615,7 @@ class Grenade:
                     damage_rolled = hhtable.rolldice(*self.radius_damage)
                 else:
                     damage_rolled = obj.fighter.hp
-                message('The ' + obj.name + ' takes blast damage for ' + str(damage_rolled) + ' hit points.',
+                message(obj.name.capitalize() + ' takes blast damage for ' + str(damage_rolled) + ' hit points.',
                         libtcod.orange)
                 obj.fighter.take_damage(damage_rolled, 'own grenade')
 

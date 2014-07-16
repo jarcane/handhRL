@@ -207,7 +207,7 @@ def make_armor():
                                'labyrinthum', 'depleted uranium'],
                      'powered': ['diamond weave', 'neutronium plate', 'Schrodinger state', 'crystal timber',
                                'labyrinthum', 'depleted uranium'],
-                     'shield': ['hard light', 'Pauli field', 'smart shield', 'dark matter', 'micro-singularity',
+                     'shield': ['hard light', 'Pauli field', 'smart', 'dark matter', 'micro-singularity',
                                 'dephasic']}
 
     ancient_suffix = {'light': 'suit',
@@ -309,8 +309,8 @@ def make_grenade():
         ['plasma', (4, 6), 3, (4, 6), False, False],
         ['Thermex', (4, 6), 0, None, False, False],
         ['Compound S', (5, 6), 3, (3, 6), False, False],
-        ['microfusion', None, 12, None, True, True],
-        ['microfission', None, 12, (5, 6), True, False]
+        ['microfusion', None, 6, None, True, True],
+        ['microfission', None, 6, (5, 6), True, False]
     ]
 
     name, damage, radius, radius_damage, kills, kills_radius = random.choice(grenades)
