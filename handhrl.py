@@ -1376,10 +1376,10 @@ def place_objects(room):
     # functions the same as the monster chances (weighted values, availability by level)
     # future revisions should break this down by type instead of individual item, resolving specific items in the
     # sub entries below.
-    item_chances = ['item',
-                    'armor',
-                    'weapon',
-                    'placeable']
+    item_chances = {'item': 4,
+                    'armor': 3,
+                    'weapon': 3,
+                    'placeable': 2}
 
     # choose random number of monsters
     num_monsters = libtcod.random_get_int(0, 0, max_monsters)
@@ -1407,7 +1407,7 @@ def place_objects(room):
 
         # only place it if the tile is not blocked
         if not is_blocked(x, y):
-            choice = random.choice(item_chances)
+            choice = random_choice(item_chances)
             if choice == 'item':
                 item = get_item(x, y)
             elif choice == 'armor':
