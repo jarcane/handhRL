@@ -617,6 +617,30 @@ class Confuse:
         message('The eyes of the ' + monster.name + ' look vacant, as he starts to stumble around!', libtcod.light_green)
 
 
+class Detector:
+    # generic class for a device that detects monster presences
+    def __init__(self, detect_range=None):
+        self.detect_range = detect_range
+
+    def use(self):
+        # flag all monsters within range as always_visible (or all monsters on map if detect_range=None)
+        message('The machine goes "Ping!"')
+        for obj in objects:
+            if obj.fighter and self.detect_range is None:
+                obj.always_visible = True
+            elif obj.fighter and obj.distance(player.x, player.y) <= self.detect_range:
+                obj.always_visible = True
+
+
+class Summon:
+    def __init__(self, name, hitdice):
+        self.name = name
+        self.hitdice = hitdice
+
+    def use(self):
+        pass
+
+
 class Terminal:
     def __init__(self, type=None):
         self.type = type
@@ -1203,7 +1227,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
 
 def get_item(x, y):
-    choice = random.choice(['heal', 'grenade', 'buff', 'misc'])
+    choice = random.choice(['heal', 'grenade', 'misc'])
 
     if choice == 'heal':
         # create a healing item
@@ -1219,14 +1243,9 @@ def get_item(x, y):
                                     kills_radius=grenade['kills_radius'])
         item_component = Item(use_function=grenade_component)
         item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
-    elif choice == 'buff':
-        # create a buff item
-        buff = hhtable.make_buff()
-        buff_component = Buff(*buff['args'])
-        item_component = Item(use_function=buff_component)
-        item = Object(x, y, chr(167), buff['name'], libtcod.dark_magenta, item=item_component)
+
     elif choice == 'misc':
-        subchoice = random.choice(['confuse', 'random_damage'])
+        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector'])
 
         if subchoice == 'random_damage':
             # create an arc lightning device
@@ -1238,6 +1257,17 @@ def get_item(x, y):
             confuse_component = Confuse()
             item_component = Item(use_function=confuse_component)
             item = Object(x, y, '#', 'neural scrambler', libtcod.light_yellow, item=item_component)
+        elif subchoice == 'buff':
+            # create a buff item
+            buff = hhtable.make_buff()
+            buff_component = Buff(*buff['args'])
+            item_component = Item(use_function=buff_component)
+            item = Object(x, y, chr(167), buff['name'], libtcod.dark_magenta, item=item_component)
+        elif subchoice == 'detector':
+            # create a motion tracker
+            detector_component = Detector(detect_range=10)
+            item_component = Item(reusable=True, uses=rolldice(1, 3), use_function=detector_component)
+            item = Object(x, y, '#', 'motion tracker', libtcod.light_yellow, item=item_component)
 
     return item
 
