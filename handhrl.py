@@ -384,12 +384,12 @@ class Fighter:
             pronoun = ''
 
         # roll to hit
-        if rolldice(1, 20) >= to_hit_target:
+        if hhtable.rolldice(1, 20) >= to_hit_target:
             message(self.owner.name.title() + ' misses ' + pronoun + target.name + '.')
             return
 
         # now roll for damage (curr. using OD&D style)
-        damage = rolldice(*self.damage_roll) + self.damage
+        damage = hhtable.rolldice(*self.damage_roll) + self.damage
 
         if damage > 0:
             # make the target take some damage
@@ -434,12 +434,12 @@ class Fighter:
         gun.ammo -= 1
 
         # roll to hit
-        if rolldice(1, 20) >= to_hit_target:
+        if hhtable.rolldice(1, 20) >= to_hit_target:
             message(self.owner.name.title() + ' misses the ' + target.name + '.')
             return
 
         # now roll for damage (curr. using OD&D style)
-        damage = rolldice(*self.damage_roll) + gun.damage_bonus
+        damage = hhtable.rolldice(*self.damage_roll) + gun.damage_bonus
 
         if damage > 0:
             # make the target take some damage
@@ -499,7 +499,7 @@ class Heal:
             message('You are already at full health.', libtcod.red)
             return 'cancelled'
 
-        heal_roll = rolldice(*self.dice)
+        heal_roll = hhtable.rolldice(*self.dice)
         message('Your pain subsides, for now. You restore ' + str(heal_roll) + ' hit points.', libtcod.light_violet)
         player.fighter.heal(heal_roll)
 
@@ -518,7 +518,7 @@ class RandomDamage:
             return 'cancelled'
 
         # zap it!
-        damage = rolldice(*self.damage)
+        damage = hhtable.rolldice(*self.damage)
         message('A bolt of electricity arcs into the ' + monster.name + ' with a loud ZZZAP! The damage is ' + str(
             damage) + ' hit points.', libtcod.light_blue)
         monster.fighter.take_damage(damage, 'electrical discharge')
@@ -540,7 +540,7 @@ class Grenade:
 
         for obj in objects:  # damage every fighter in range, including the player
             if obj.distance(x, y) <= self.radius and obj.fighter:
-                damage_rolled = rolldice(*self.damage)
+                damage_rolled = hhtable.rolldice(*self.damage)
                 message('The ' + obj.name + ' gets burned for ' + str(damage_rolled) + ' hit points.', libtcod.orange)
                 obj.fighter.take_damage(damage_rolled, 'own fireball')
 
@@ -570,6 +570,16 @@ class Terminal:
     def use(self):
         # get a random creepy message
         hhmessage.creep_log()
+
+
+class HealPod:
+    def __init__(self):
+        pass
+
+
+class Teleporter:
+    def __init__(self):
+        pass
 
 
 def main_menu(firstrun=False):
@@ -629,7 +639,8 @@ def new_game(firstrun=False):
 
     # create Player object
     # Assume Soldier class with 10 STR, 10 DEX, 10 CON
-    fighter_component = Fighter(hp=rolldice(3, 6) + rolldice(1, 10), armor_class=10, to_hit=1, damage=1,
+    fighter_component = Fighter(hp=hhtable.rolldice(3, 6) + hhtable.rolldice(1, 10),
+                                armor_class=10, to_hit=1, damage=1,
                                 damage_roll=[1, 3],
                                 xp=0, death_function=player_death)
     player = Object(0, 0, chr(1), get_text_entry('What is your name, Ensign?', hhmessage.generate_screen()),
@@ -1059,28 +1070,6 @@ def random_choice_index(chances):  # choose one option from a list of chances an
         choice += 1
 
 
-def rolldice(num, sides, highest=0):
-    # rolls a given number of dice and returns their total
-    # args: num = number of dice, sides = number of sides on each die,
-    # highest (optional) = if != 0, returns only the sum of the highest number of dice given
-    # Ex. (using H&H notation): 4d6 = rolldice(4,6); 3d6H2 = rolldice(3,6,highest=2)
-
-    roll = []
-    total = 0
-    if highest != 0:
-        for x in range(num):
-            roll.append(libtcod.random_get_int(0, 1, sides))
-        roll.sort(reverse=True)
-        for x in range(highest):
-            total += roll[x]
-        return total
-    else:
-        for x in range(num):
-            roll.append(libtcod.random_get_int(0, 1, sides))
-        total = sum(roll)
-        return total
-
-
 def from_dungeon_level(table):
     # returns a value that depends on level. the table specifies what value occurs after each level, default is 0
     for (value, level) in reversed(table):
@@ -1123,7 +1112,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
     else:
         roll = (num / 2, sides)
 
-    fighter_component = Fighter(hp=rolldice(*hitdice), armor_class=10 - num, to_hit=to_hit,
+    fighter_component = Fighter(hp=hhtable.rolldice(*hitdice), armor_class=10 - num, to_hit=to_hit,
                                 damage=0, damage_roll=roll, xp=num * sides * 5, death_function=monster_death)
     ai_component = BasicMonster()
     monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
@@ -1632,7 +1621,7 @@ def check_level_up():
 
         # check player level, roll 1d10 for new HP if 6 or less, or just +3 (see H&H rulebook)
         if player.level <= 6:
-            hit_die = rolldice(1, 10)
+            hit_die = hhtable.rolldice(1, 10)
         else:
             hit_die = 3
         player.fighter.max_hp += hit_die
