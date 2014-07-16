@@ -577,14 +577,36 @@ class Terminal:
             hhmessage.hint_message()
 
 
-class HealPod:
-    def __init__(self):
-        pass
+class RestPod:
+    def __init__(self, heal_amount=(1, 6), heal_bonus=0):
+        self.heal_bonus = heal_bonus
+        self.heal_amount = heal_amount
+
+    def use(self):
+        # heal the player
+        if player.fighter.hp == player.fighter.max_hp:
+            message('You are already at full health.', libtcod.red)
+            return 'cancelled'
+
+        heal_roll = hhtable.rolldice(*self.heal_amount) + self.heal_bonus
+        message('You relax inside the metal cocoon. You restore ' + str(heal_roll) + ' hit points.',
+                libtcod.light_violet)
+        player.fighter.heal(heal_roll)
 
 
 class Teleporter:
-    def __init__(self):
-        pass
+    def __init__(self, new_level=None):
+        self.new_level = new_level
+        if self.new_level is None:
+            self.new_level = libtcod.random_get_int(0, 1, 12)
+
+    def use(self):
+        global dungeon_level
+        message('You feel a sudden jolt and find yourself staring at a completely different room.', libtcod.red)
+        dungeon_level = self.new_level
+
+        make_map()
+        initialize_fov()
 
 
 def main_menu(firstrun=False):
@@ -1178,9 +1200,22 @@ def get_armor(x, y):
 
 
 def get_placeable(x, y):
-    terminal = Terminal()
-    placeable = Placeable(use_class=terminal)
-    return Object(x, y, chr(127), 'terminal', libtcod.silver, placeable=placeable)
+    type = random.choice(['terminal', 'restpod', 'teleporter'])
+
+    if type == 'terminal':
+        terminal = Terminal()
+        placeable = Placeable(use_class=terminal)
+        obj = Object(x, y, chr(127), 'terminal', libtcod.silver, placeable=placeable)
+    elif type == 'restpod':
+        restpod = RestPod(heal_bonus=dungeon_level)
+        placeable = Placeable(use_class=restpod)
+        obj = Object(x, y, chr(239), 'rest pod', libtcod.purple, placeable=placeable)
+    elif type == 'teleporter':
+        teleport = Teleporter()
+        placeable = Placeable(use_class=teleport)
+        obj = Object(x, y, chr(23), 'teleporter', libtcod.dark_blue, placeable=placeable)
+
+    return obj
 
 
 def place_objects(room):

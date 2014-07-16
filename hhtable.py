@@ -56,7 +56,7 @@ def make_monster_table(dungeon_level):
                      'paleworm': [7, ['paleworm', (5, 6), libtcod.dark_pink]],
                      'gulper': [9, ['gulper', (5, 8), libtcod.lightest_grey]],
                      'centipod': [9, ['centipod', (5, 6), libtcod.darkest_red]],
-                     'blind_troll': [9, ['blind_troll', (5, 10), libtcod.darkest_green]],
+                     'blind_troll': [9, ['blind troll', (5, 10), libtcod.darkest_green]],
                      'scumsucker': [11, ['scumsucker', (6, 8), libtcod.peach]],
                      'living_weapon': [11, ['living weapon', (6, 12), libtcod.black]],
                      'megaworm': [13, ['megaworm', (8, 10), libtcod.silver]]}
