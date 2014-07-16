@@ -299,7 +299,8 @@ class Placeable:
 
 class Fighter:
     # combat-related properties and methods (monster, player, npc)
-    def __init__(self, hp, armor_class, to_hit, damage, damage_roll, xp, kills=0, death_function=None):
+    def __init__(self, hp, armor_class, to_hit, damage, damage_roll, xp, damage_resistance=0,
+                 kills=0, death_function=None):
         self.base_max_hp = hp
         self.hp = hp
         self.base_armor_class = armor_class
@@ -307,6 +308,7 @@ class Fighter:
         self.base_damage = damage
         self.base_roll = damage_roll
         self.xp = xp
+        self.damage_resistance = damage_resistance
         self.kills = kills
         self.death_function = death_function
 
@@ -396,7 +398,7 @@ class Fighter:
             return
 
         # now roll for damage (curr. using OD&D style)
-        damage = hhtable.rolldice(*self.damage_roll) + self.damage
+        damage = (hhtable.rolldice(*self.damage_roll) + self.damage) - target.fighter.damage_resistance
 
         if damage > 0:
             # make the target take some damage
@@ -446,7 +448,7 @@ class Fighter:
             return
 
         # now roll for damage (curr. using OD&D style)
-        damage = hhtable.rolldice(*self.damage_roll) + gun.damage_bonus
+        damage = (hhtable.rolldice(*self.damage_roll) + gun.damage_bonus) - target.fighter.damage_resistance
 
         if damage > 0:
             # make the target take some damage
@@ -513,6 +515,31 @@ class Heal:
             heal_roll = hhtable.rolldice(*self.dice)
         message('Your pain subsides, for now. You restore ' + str(heal_roll) + ' hit points.', libtcod.light_violet)
         player.fighter.heal(heal_roll)
+
+
+class Buff:
+    # generic process for items which permanently improve stats
+    def __init__(self, max_hp=0, to_hit=0, damage=0, ac=0, xp=0, dr=0, desc=None):
+        self.max_hp = max_hp
+        self.to_hit = to_hit
+        self.damage = damage
+        self.ac = ac
+        self.xp = xp
+        self.dr = dr
+        self.desc = desc
+
+    def use(self):
+        # apply all bonuses from the item
+        player.fighter.max_hp += self.max_hp
+        player.fighter.to_hit += self.to_hit
+        player.fighter.damage += self.damage
+        player.fighter.armor_class += self.ac
+        player.fighter.xp += self.xp
+        player.fighter.damage_resistance += self.dr
+        if self.desc is None:
+            message('A rush flows through you, and you feel improved!')
+        else:
+            message(self.desc)
 
 
 class RandomDamage:
@@ -805,7 +832,7 @@ def load_game():
 
 def new_score(player):
     # generate a new score from player and dungeon_level, save it to file, then ask to display it.
-    score = player.fighter.kills * player.level * (13 - dungeon_level)
+    score = player.fighter.kills * player.level * dungeon_level
     score_data = [score, player.name.title(), player.killed_by, str(dungeon_level)]
 
     scores = shelve.open('scorefile', 'c', writeback=True)
@@ -950,6 +977,7 @@ def handle_keys(key, mouse):
                                   'Experience to level up: ' + str(level_up_xp),
                                   'Maximum HP: ' + str(player.fighter.max_hp),
                                   'AC: ' + str(player.fighter.armor_class),
+                                  'DR: ' + str(player.fighter.damage_resistance),
                                   'To-hit: +' + str(player.fighter.to_hit),
                                   'Damage Bonus: +' + str(player.fighter.damage),
                                   'Damage Roll: ' + str(player.fighter.damage_roll[0]) + 'd' + str(
@@ -1175,7 +1203,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
 
 def get_item(x, y):
-    choice = random.choice(['heal', 'grenade', 'misc'])
+    choice = random.choice(['heal', 'grenade', 'buff', 'misc'])
 
     if choice == 'heal':
         # create a healing item
@@ -1191,6 +1219,12 @@ def get_item(x, y):
                                     kills_radius=grenade['kills_radius'])
         item_component = Item(use_function=grenade_component)
         item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
+    elif choice == 'buff':
+        # create a buff item
+        buff = hhtable.make_buff()
+        buff_component = Buff(*buff['args'])
+        item_component = Item(use_function=buff_component)
+        item = Object(x, y, chr(167), buff['name'], libtcod.dark_magenta, item=item_component)
     elif choice == 'misc':
         subchoice = random.choice(['confuse', 'random_damage'])
 
@@ -1547,6 +1581,7 @@ def render_all():
     render_bar(1, 2, BAR_WIDTH, 'XP', player.fighter.xp, level_up_xp, libtcod.dark_green, libtcod.grey)
     libtcod.console_print_ex(panel, 1, 4, libtcod.BKGND_NONE, libtcod.LEFT, 'Exp. level ' + str(player.level))
     libtcod.console_print_ex(panel, 1, 5, libtcod.BKGND_NONE, libtcod.LEFT, 'Cave level ' + str(dungeon_level))
+    libtcod.console_print_ex(panel, 1, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'Kills: ' + str(player.fighter.kills))
 
     # display names of objects under mouse
     libtcod.console_set_default_foreground(panel, libtcod.light_gray)

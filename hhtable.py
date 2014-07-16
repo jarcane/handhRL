@@ -296,15 +296,16 @@ def make_heal_item():
 def make_grenade():
     # create a grenade object
 
-    # parameter list: name, target damage, blast radius, radius damage, automatically kills,
-    # automatically kills in radius
+    # parameter list: name, target damage, blast radius, radius damage, automatically kills target,
+    # automatically kills targets in radius
     grenades = [
         ['frag', (3, 6), 3, (1, 6), False, False],
         ['incendiary', (1, 6), 3, (1, 6), False, False],
         ['plasma', (4, 6), 3, (4, 6), False, False],
         ['Thermex', (4, 6), 0, None, False, False],
         ['Compound S', (5, 6), 3, (3, 6), False, False],
-        ['microfission', None, 12, None, True, True]
+        ['microfission', None, 12, None, True, True],
+        ['microfusion', None, 12, (5, 6), True, False]
     ]
 
     name, damage, radius, radius_damage, kills, kills_radius = random.choice(grenades)
@@ -321,3 +322,29 @@ def make_grenade():
     }
 
     return item
+
+
+def make_buff():
+    # generate parameters for buff items
+
+    # generate a list with on random bonus for nano-augment
+    augment = [0 for x in range(6)]
+    for x in range(len(augment)):
+        roll = libtcod.random_get_int(0, 0, 1)
+        if roll != 0:
+            augment[x] = roll
+            break
+
+    # buff parameters: name, arguments list
+    # arguments list: max_hp=0, to_hit=0, damage=0, ac=0, xp=0, dr=0, desc=None
+
+    buffs = [
+        ['Immunol', [1, 0, 0, 0, 0, 0, 'You feel more resilient!']],
+        ['Clariphine', [0, 0, 0, 0, 0, 1, 'You feel like you could take on the world!']],
+        ['cellular motility boost', [0, 1, 1, 0, 0, 0, 'You feel more agile.']],
+        ['nano-augment capsule', augment]
+    ]
+
+    name, args = random.choice(buffs)
+
+    return {'name': name, 'args': args}
