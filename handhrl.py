@@ -287,7 +287,7 @@ class Placeable:
             message('You have already used that object!')
         else:
             if self.use_class.use(*args) != 'cancelled':
-                self.used = True  # destroy after use unless cancelled
+                self.used = True  # disable after use unless cancelled
 
 
 class Fighter:
