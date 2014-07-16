@@ -489,6 +489,7 @@ class FriendlyMonster:
     def take_turn(self):
         # a monster that protects the player and attacks other monsters
         monster = self.owner
+
         enemy = closest_monster(self.max_range, (monster, player))
 
         if enemy is not None:
@@ -1159,7 +1160,7 @@ def player_move_or_attack(dx, dy):
     # try to find an attackable object there
     target = None
     for object in objects:
-        if object.fighter and object.x == x and object.y == y:
+        if object.fighter and object.ai == FriendlyMonster and object.x == x and object.y == y:
             target = object
             break
 
@@ -1250,7 +1251,7 @@ def get_monster_from_hitdice(x, y, name, hitdice, color, friendly=False):
         ai_component = FriendlyMonster()
     else:
         ai_component = BasicMonster()
-    monster = Object(x, y, letter, name, color, blocks=True, fighter=fighter_component, ai=ai_component)
+    monster = Object(x, y, letter, name, color, blocks=(not friendly), fighter=fighter_component, ai=ai_component)
 
     return monster
 
