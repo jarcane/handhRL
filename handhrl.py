@@ -1159,8 +1159,10 @@ def player_move_or_attack(dx, dy):
 
     # try to find an attackable object there
     target = None
+
     for object in objects:
-        if object.fighter and object.ai == FriendlyMonster and object.x == x and object.y == y:
+        friendly = isinstance(object.ai, FriendlyMonster)
+        if object.fighter and not friendly and object.x == x and object.y == y:
             target = object
             break
 
