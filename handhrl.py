@@ -1277,7 +1277,7 @@ def get_item(x, y):
         item = Object(x, y, '*', grenade['name'], libtcod.light_yellow, item=item_component)
 
     elif choice == 'misc':
-        subchoice = random.choice(['summon'])
+        subchoice = random.choice(['confuse', 'buff', 'random_damage', 'detector', 'summon', 'vector'])
 
         if subchoice == 'random_damage':
             # create an arc lightning device
