@@ -264,3 +264,30 @@ def make_armor():
     armor = {'char': char, 'name': name, 'ac': ac, 'str_bonus': str_bonus, 'dex_bonus': dex_bonus}
 
     return armor
+
+
+def make_heal_item():
+    # create parameters for a healing item
+
+    # parameter list: name, rolldice tuple, reusable flag, # of uses, heal_all flag
+    items = {
+        'opacaine': ['Opacaine', (1, 4), False, 1, False],
+        'firstaid': ['first-aid kit', (1, 6), True, 3, False],
+        'heal-x': ['Heal-X', None, False, 1, True],
+        'panacea': ['Panacea', None, True, 10, True]
+    }
+
+    name, roll, reuse, uses, heal_all = random.choice(items)
+
+    if not reuse:
+        name = 'dose of ' + name
+
+    item = {
+        'name': name,
+        'roll': roll,
+        'reuse': reuse,
+        'uses': uses,
+        'heal_all': heal_all
+    }
+
+    return item

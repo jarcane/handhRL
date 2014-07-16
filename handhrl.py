@@ -186,8 +186,10 @@ class Object:
 
 class Item:
     # an item that can be picked up and used.
-    def __init__(self, use_function=None):
+    def __init__(self, reusable=False, uses=1, use_function=None):
         self.use_function = use_function
+        self.reusable = reusable
+        self.uses = uses
         if self.use_function:
             self.use_function.owner = self
 
@@ -195,9 +197,14 @@ class Item:
         # just call the use_function if it is defined
         if self.use_function is None:
             message('The ' + self.owner.name + ' cannot be used.')
-        else:
+        elif not self.reusable:
             if self.use_function.use(*args) != 'cancelled':
                 inventory.remove(self.owner)  # destroy after use unless cancelled
+        else:
+            if self.use_function.use(*args) != 'cancelled':
+                self.uses -= 1
+                if self.uses < 1:
+                    inventory.remove(self.owner)
 
         # special case: if object has equipment component, the use option is to equip/dequip
         if self.owner.equipment:
@@ -489,9 +496,10 @@ class ConfusedMonster:
 
 class Heal:
     # generic process for healing items
-    def __init__(self, dice=HEAL_AMOUNT, max_boost=False):
+    def __init__(self, dice=HEAL_AMOUNT, max_boost=False, heal_all=False):
         self.dice = dice
         self.max_boost = max_boost
+        self.heal_all = heal_all
 
     def use(self):
         # heal the player
@@ -499,7 +507,10 @@ class Heal:
             message('You are already at full health.', libtcod.red)
             return 'cancelled'
 
-        heal_roll = hhtable.rolldice(*self.dice)
+        if self.heal_all:
+            heal_roll = player.fighter.max_hp
+        else:
+            heal_roll = hhtable.rolldice(*self.dice)
         message('Your pain subsides, for now. You restore ' + str(heal_roll) + ' hit points.', libtcod.light_violet)
         player.fighter.heal(heal_roll)
 
@@ -804,8 +815,8 @@ def show_scores():
     score_list = ['High Scores']
     c = 0
     for i in scores:
-        n_score = '{0: >3}'.format(str(c + 1)) + '. ' + '{0: >8}'.format(str(scores[c][0])) + '  ' + scores[c][1]
-        n_score += ', killed by ' + scores[c][2] + ' on cave level ' + scores[c][3]
+        n_score = '{0: >3}'.format(str(c + 1)) + '. ' + '{0: >5}'.format(str(scores[c][0])) + '  ' + scores[c][1]
+        n_score += ', killed by ' + scores[c][2] + ' on level ' + scores[c][3]
         score_list.append(n_score)
         c += 1
         if c > 10:
@@ -1148,24 +1159,25 @@ def get_monster_from_hitdice(x, y, name, hitdice, color):
 
 
 def get_item(x, y):
-    choice = libtcod.random_get_int(0, 1, 4)
+    choice = random.choice(['heal', 'random_damage', 'grenade', 'confuse'])
 
-    if choice == 1:
+    if choice == 'heal':
         # create a healing item
-        heal_component = Heal()
-        item_component = Item(use_function=heal_component)
-        item = Object(x, y, '!', 'dose of Opacaine', libtcod.violet, item=item_component)
-    elif choice == 2:
+        heal_item = hhtable.make_heal_item()
+        heal_component = Heal(dice=heal_item['roll'], heal_all=heal_item['heal_all'])
+        item_component = Item(reusable=heal_item['reuse'], uses=heal_item['uses'], use_function=heal_component)
+        item = Object(x, y, '!', heal_item['name'], libtcod.violet, item=item_component)
+    elif choice == 'random_damage':
         # create an arc lightning device
         random_damage_component = RandomDamage()
         item_component = Item(use_function=random_damage_component)
         item = Object(x, y, '#', 'Tesla arc device', libtcod.light_yellow, item=item_component)
-    elif choice == 3:
+    elif choice == 'grenade':
         # create a grenade
         grenade_component = Grenade()
         item_component = Item(use_function=grenade_component)
         item = Object(x, y, '*', 'incendiary grenade', libtcod.light_yellow, item=item_component)
-    elif choice == 4:
+    elif choice == 'confuse':
         # create a confuse item
         confuse_component = Confuse()
         item_component = Item(use_function=confuse_component)
