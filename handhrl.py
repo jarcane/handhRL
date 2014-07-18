@@ -1816,7 +1816,7 @@ def check_level_up():
 # ############################################
 # Initialization & Main Loop
 # ############################################
-libtcod.console_set_custom_font('terminal16x16_gs_ro.png',
+libtcod.console_set_custom_font('cocoish16x16_gs_ro-INCOMPLETE.png',
                                 libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_ASCII_INROW)
 libtcod.console_init_root(SCREEN_WIDTH, SCREEN_HEIGHT, 'Hulks and Horrors', False)
 libtcod.sys_set_fps(LIMIT_FPS)
