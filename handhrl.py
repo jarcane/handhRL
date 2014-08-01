@@ -565,13 +565,13 @@ class Buff:
 
 class RandomDamage:
     # generic process for items that damage a random target
-    def __init__(self, damage=LIGHTNING_DAMAGE, attackrange=LIGHTNING_RANGE):
+    def __init__(self, damage=LIGHTNING_DAMAGE, attack_range=LIGHTNING_RANGE):
         self.damage = damage
-        self.attackrange = attackrange
+        self.attack_range = attack_range
 
     def use(self):
         # find closest enemy inside max range and damage it
-        monster = closest_monster(self.attackrange, (player))
+        monster = closest_monster(self.attack_range, [player])
         if monster is None:  # no enemy found within range
             message('No enemy is within arc range.')
             return 'cancelled'
@@ -1732,12 +1732,12 @@ def closest_monster(max_range, exclusions):
     closest_enemy = None
     closest_dist = max_range + 1  # start with slightly more than max range
 
-    for object in objects:
-        if object.fighter and object not in exclusions and libtcod.map_is_in_fov(fov_map, object.x, object.y):
+    for obj in objects:
+        if obj.fighter and obj not in exclusions and libtcod.map_is_in_fov(fov_map, obj.x, obj.y):
             # calculate distance between this object and the player
-            dist = player.distance_to(object)
+            dist = player.distance_to(obj)
             if dist < closest_dist:  # it's closer so remember it
-                closest_enemy = object
+                closest_enemy = obj
                 closest_dist = dist
     return closest_enemy
 
