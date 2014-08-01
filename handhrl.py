@@ -195,8 +195,12 @@ class Item:
 
     def use(self, *args):
         # just call the use_function if it is defined
-        if self.use_function is None:
+        if self.use_function is None and not self.owner.equipment:
             message('The ' + self.owner.name + ' cannot be used.')
+        elif self.owner.equipment:
+            # special case: if object has equipment component, the use option is to equip/dequip
+            self.owner.equipment.toggle_equip()
+            return
         elif not self.reusable:
             if self.use_function.use(*args) != 'cancelled':
                 inventory.remove(self.owner)  # destroy after use unless cancelled
@@ -205,11 +209,6 @@ class Item:
                 self.uses -= 1
                 if self.uses < 1:
                     inventory.remove(self.owner)
-
-        # special case: if object has equipment component, the use option is to equip/dequip
-        if self.owner.equipment:
-            self.owner.equipment.toggle_equip()
-            return
 
     def pick_up(self):
         # add to the player's inventory and remove from the map
