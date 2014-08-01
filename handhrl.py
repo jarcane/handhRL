@@ -1729,6 +1729,7 @@ def is_blocked(x, y):
 
 def closest_monster(max_range, exclusions):
     # find closest enemy, up to a max range and in player FOV
+    # exclusions argument MUST BE A LIST
     closest_enemy = None
     closest_dist = max_range + 1  # start with slightly more than max range
 
